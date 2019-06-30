@@ -22,6 +22,7 @@ A personal navigator.
 - nginx: 用于配置域名映射
 
 ## dev-plan
+
 -[x] vue.js简单的前端展示，静态页面
 -[ ] django admin后台管理系统
 -[ ] 绑定域名
