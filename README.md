@@ -23,11 +23,11 @@ A personal navigator.
 
 ## dev-plan
 
--[x] vue.js简单的前端展示，静态页面
--[ ] django admin后台管理系统
--[ ] 绑定域名
--[ ] django添加标签页
--[ ] django后台接口: 返回标签内容
--[ ] vue从后台获取标签内容并渲染
--[ ] 美化样式
--[ ] other
+- [x] vue.js简单的前端展示，静态页面
+- [ ] django admin后台管理系统
+- [ ] 绑定域名
+- [ ] django添加标签页
+- [ ] django后台接口: 返回标签内容
+- [ ] vue从后台获取标签内容并渲染
+- [ ] 美化样式
+- [ ] other
