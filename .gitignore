@@ -1,0 +1,21 @@
+pnav_vue/.DS_Store
+pnav_vue/node_modules
+pnav_vue/dist
+
+# local env files
+pnav_vue/.env.local
+pnav_vue/.env.*.local
+
+# Log files
+pnav_vue/npm-debug.log*
+pnav_vue/yarn-debug.log*
+pnav_vue/yarn-error.log*
+
+# Editor directories and files
+pnav_vue/.idea
+pnav_vue/.vscode
+pnav_vue/*.suo
+pnav_vue/*.ntvs*
+pnav_vue/*.njsproj
+pnav_vue/*.sln
+pnav_vue/*.sw?

@@ -7,6 +7,10 @@ A personal navigator.
 
 本项目就是用来解决这个问题的。简单说，就是一个属于个人的个性化导航页。
 
+## note
+- 开发时，记得将pnav_vue里的.gitignore的内容复制到根目录下的.gitignore里，并加上pnav_vue/前缀
+- vue.config.js里的productionSourceMap: false，设为true时会报错，不知道为什么？
+
 
 ## stacks
 
@@ -18,7 +22,7 @@ A personal navigator.
 - nginx: 用于配置域名映射
 
 ## dev-plan
--[ ] vue.js简单的前端展示，静态页面
+-[x] vue.js简单的前端展示，静态页面
 -[ ] django admin后台管理系统
 -[ ] 绑定域名
 -[ ] django添加标签页
