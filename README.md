@@ -10,11 +10,13 @@ A personal navigator.
 ## note
 - 开发时，记得将pnav_vue里的.gitignore的内容复制到根目录下的.gitignore里，并加上pnav_vue/前缀
 - vue.config.js里的productionSourceMap: false，设为true时会报错，不知道为什么？
+- pnav_vue: 前端代码
+- pnav_spring: 后台接口代码
 
 
 ## stacks
 
-- django: 用于后台管理系统和接口
+- spring cloud: 用于后台管理系统的接口 学习用
 - mysql: 用于存储数据
 - celery + redis: 其实没必要，为了学习而用
 - vue.js: 前端，其实简单的html也行，为了学习而用
@@ -24,10 +26,10 @@ A personal navigator.
 ## dev-plan
 
 - [x] vue.js简单的前端展示，静态页面
-- [ ] django admin后台管理系统
-- [ ] 绑定域名
-- [ ] django添加标签页
-- [ ] django后台接口: 返回标签内容
+- [x] 绑定域名 pnav.gupern.tech
+- [ ] spring cloud 后台管理系统
+- [ ] spring cloud 添加标签页
+- [ ] spring cloud后台接口: 返回标签内容
 - [ ] vue从后台获取标签内容并渲染
 - [ ] 美化样式
 - [ ] other
