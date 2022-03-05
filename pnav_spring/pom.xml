@@ -140,7 +140,9 @@
 
 			<!-- 拷贝资源文件 -->
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
 				<executions>
 					<execution>
 						<id>copy-resources</id>
@@ -176,7 +178,7 @@
 			</properties>
 			<build>
 				<filters>
-					<filter>${basedir}/src/main/resources/application-dev.properties</filter>
+					<filter>${basedir}/src/main/resources/application.properties</filter>
 				</filters>
 			</build>
 		</profile>

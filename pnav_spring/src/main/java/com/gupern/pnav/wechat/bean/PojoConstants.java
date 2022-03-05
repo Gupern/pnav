@@ -1,5 +1,6 @@
 package com.gupern.pnav.wechat.bean;
 
+import com.gupern.pnav.common.util.CryptoUtil;
 import org.springframework.beans.factory.annotation.Value;
 
 public class PojoConstants {
@@ -7,8 +8,13 @@ public class PojoConstants {
     @Value("${wechat.official_account.appid}")
     public static final String APPID = "";
     // 公众号appsecert
-    @Value("${wechat.official_account.appsecret}")
-    public static final String APPSECRET = "";
+    @Value("${wechat.official_account.appsecret.encoded}")
+    public static final String appSecretEncoded = "";
+
+    @Value("${crypto.aes.key}")
+    public static String aesKey = "local";
+
+    public static final String APPSECRET = decodeAppSecret(appSecretEncoded);
     // 静默授权
     public static final String SCOPE_BASE = "snsapi_base";
     // 获取用户信息会提示确认授权
@@ -20,6 +26,12 @@ public class PojoConstants {
 
     // 将appid与appsecert填入后得到的URL
     public static String getAccess_token_url(){
-        return ACCESS_TOKEN_URL.replace("APPID",APPID).replace("APPSECRET",APPSECRET);
+        return ACCESS_TOKEN_URL.replace("APPID",APPID).replace("APPSECRET", APPSECRET);
+    }
+
+    // 解密appsecret
+    public static String decodeAppSecret(String appSecretEncoded) {
+        CryptoUtil cryptoUtil = CryptoUtil.getInstance(null);
+        return cryptoUtil.AESdecode(appSecretEncoded,aesKey);
     }
 }

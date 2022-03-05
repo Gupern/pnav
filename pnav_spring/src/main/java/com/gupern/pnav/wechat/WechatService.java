@@ -1,5 +1,11 @@
 package com.gupern.pnav.wechat;
 
+import com.alibaba.fastjson.JSONObject;
+
+import javax.servlet.http.HttpServletRequest;
+
 public interface WechatService {
     Object sayHelloWorld();
+
+    Object miniprogramPush(HttpServletRequest httpServletRequest, JSONObject postJson);
 }

@@ -1,4 +1,4 @@
-package com.gupern.pnav.common.base;
+package com.gupern.pnav.common.bean;
 
 /**
  * 响应枚举类

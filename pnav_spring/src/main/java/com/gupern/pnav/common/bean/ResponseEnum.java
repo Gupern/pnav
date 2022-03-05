@@ -1,6 +1,4 @@
-package com.gupern.pnav.common;
-
-import com.gupern.pnav.common.base.BaseResponseEnum;
+package com.gupern.pnav.common.bean;
 
 /**
  *响应码
