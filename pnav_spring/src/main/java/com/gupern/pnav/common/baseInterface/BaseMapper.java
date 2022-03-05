@@ -1,4 +1,4 @@
-package com.gupern.pnav.common.bean;
+package com.gupern.pnav.common.baseInterface;
 
 import java.io.Serializable;
 /**

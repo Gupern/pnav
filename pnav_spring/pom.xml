@@ -15,6 +15,7 @@
 	<description>pnav project for money</description>
 	<properties>
 		<java.version>11</java.version>
+		<maven.build.timestamp.format>yyyy-MM-dd_HH_mm</maven.build.timestamp.format>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -165,6 +166,7 @@
 
 
 		</plugins>
+		<finalName>${project.artifactId}-${project.version}-${maven.build.timestamp}</finalName>
 	</build>
 	<profiles>
 		<!--开发环境-->

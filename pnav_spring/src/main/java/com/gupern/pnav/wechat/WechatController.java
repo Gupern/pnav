@@ -28,7 +28,20 @@ public class WechatController {
 
     @RequestMapping(value = "/miniprogram/push", method = {GET, POST})
     @ResponseBody // 兼容post方式和get方式
-    public Object miniprogramPush(HttpServletRequest httpServletRequest, @RequestBody(required = false) JSONObject postJson) {
-        return service.miniprogramPush(httpServletRequest, postJson);
+    public Object miniprogramPush(HttpServletRequest httpServletRequest, @RequestBody(required = false) JSONObject dto) {
+        return service.miniprogramPush(httpServletRequest, dto);
+    }
+
+//    TODO 高危接口，不要暴露在互联网，只在本地调试用
+//    @RequestMapping(value = "/miniprogram/get_access_token",     method = GET)
+//    @ResponseBody
+    public Object getAccessToken() {
+        return service.getAccessToken();
+    }
+
+    @RequestMapping(value = "/miniprogram/get_session", method = POST)
+    @ResponseBody
+    public Object getOpenid(@RequestBody JSONObject dto) {
+        return service.getSession(dto);
     }
 }

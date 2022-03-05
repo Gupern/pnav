@@ -1,125 +1,84 @@
 package com.gupern.pnav.wechat.util;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
-import com.gupern.pnav.wechat.bean.PojoAuthorizedUsers;
+import com.gupern.pnav.common.util.RequestUtil;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.client.RestTemplate;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ConnectException;
-import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Objects;
+
+import static com.gupern.pnav.common.util.CryptoUtil.byteToStr;
 
 public class WechatUtil {
+    private static final Logger log = LoggerFactory.getLogger(WechatUtil.class);
 
-    private static org.slf4j.Logger log = LoggerFactory.getLogger(WechatUtil.class);
-    /**
-     * 发起https请求并获取结果
-     *
-     * @param requestUrl    请求地址
-     * @param requestMethod 请求方式（GET、POST）
-     * @param outputStr     提交的数据
-     * @return JSONObject(通过JSONObject.get ( key)的方式获取json对象的属性值)
+    private static final RestTemplate restTemplate = RequestUtil.getInstance().myRestTemplate;
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/5 19:01
+     * @description: 对微信请求进行合法性验证
+           算法
+           1. 将token、timestamp、nonce三个参数的值进行字典序排序
+           2. 将三个参数字符串拼接成一个字符串进行sha1加密
+           3. 开发者获得加密后的字符串可与signature对比，标识该请求来源于微信
      */
-    public static JSONObject httpRequest(String requestUrl, String requestMethod, String outputStr) {
-        JSONObject jsonObject = null;
-        StringBuffer buffer = new StringBuffer();
-        try {
-            // 创建SSLContext对象，并使用我们指定的信任管理器初始化
-            TrustManager[] tm = {new WechatX509TrustManager()};
-            SSLContext sslContext = SSLContext.getInstance("SSL", "SunJSSE");
-            sslContext.init(null, tm, new java.security.SecureRandom());
-            // 从上述SSLContext对象中得到SSLSocketFactory对象
-            SSLSocketFactory ssf = sslContext.getSocketFactory();
-
-            URL url = new URL(requestUrl);
-            HttpsURLConnection httpUrlConn = (HttpsURLConnection) url.openConnection();
-            httpUrlConn.setSSLSocketFactory(ssf);
-
-            httpUrlConn.setDoOutput(true);
-            httpUrlConn.setDoInput(true);
-            httpUrlConn.setUseCaches(false);
-            // 设置请求方式（GET/POST）
-            httpUrlConn.setRequestMethod(requestMethod);
-
-            if ("GET".equalsIgnoreCase(requestMethod))
-                httpUrlConn.connect();
-
-            // 当有数据需要提交时
-            if (null != outputStr) {
-                OutputStream outputStream = httpUrlConn.getOutputStream();
-                // 注意编码格式，防止中文乱码
-                outputStream.write(outputStr.getBytes("UTF-8"));
-                outputStream.close();
-            }
-
-            // 将返回的输入流转换成字符串
-            InputStream inputStream = httpUrlConn.getInputStream();
-            InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "utf-8");
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-            String str = null;
-            while ((str = bufferedReader.readLine()) != null) {
-                buffer.append(str);
-            }
-            bufferedReader.close();
-            inputStreamReader.close();
-            // 释放资源
-            inputStream.close();
-            inputStream = null;
-            httpUrlConn.disconnect();
-            jsonObject = JSONObject.parseObject(buffer.toString());
-        } catch (ConnectException ce) {
-            log.error("Weixin server connection timed out.");
-        } catch (Exception e) {
-            log.error("https request error:{}", e);
+    public static boolean checkSignature(JSONObject dto, String token) {
+        String timestamp = dto.getString("timestamp");
+        String nonce = dto.getString("nonce");
+        String signature = dto.getString("signature");
+        String[] arr = new String[]{token, timestamp, nonce};
+        // 将token、timestamp、nonce三个参数进行字典序排序
+        Arrays.sort(arr);
+        StringBuilder content = new StringBuilder();
+        for (int i = 0; i < arr.length; i++) {
+            content.append(arr[i]);
         }
-        return jsonObject;
+        MessageDigest md = null;
+        String tmpStr = null;
+
+        try {
+            md = MessageDigest.getInstance("SHA-1");
+            // 将三个参数字符串拼接成一个字符串进行sha1加密
+            byte[] digest = md.digest(content.toString().getBytes());
+            tmpStr = byteToStr(digest);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        log.info("-----执行微信签名加密认证-----:{}", token);
+        content = null; // 清空content
+        // 将sha1加密后的字符串可与signature对比，标识该请求来源于微信
+        return tmpStr != null && tmpStr.equals(signature.toUpperCase());
     }
 
-    /**
-     * 组装用户授权信息<br>
-     *
-     * @param userMessageResponse 授权用户响应数据
-     * @return authorizedUsersBean {@link PojoAuthorizedUsers 授权用户对象}
-     * @throws JSONException json转换异常
-     * @since 2017/10/10
+    /*
+     * @author: Gupern
+     * @date: 2022/3/6 0:35
+     * @description: 获取小程序的access_token
      */
-    public static PojoAuthorizedUsers convertUserInfo(String userMessageResponse, String accessToken) {
-        PojoAuthorizedUsers pojoAuthorizedUsers = new PojoAuthorizedUsers();
+    public static String getMiniProgramAccessToken(String appId, String appSecret) {
+        String url = String.format("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", appId, appSecret);
+        log.info("url:{}", url);
+        JSONObject resJson = restTemplate.getForObject(url, JSONObject.class);
+        log.info("resJson:{}", resJson);
+        return Objects.requireNonNull(resJson).getString("access_token");
+    }
 
-        JSONObject userMessageJsonObject = JSON.parseObject(userMessageResponse);
-
-        log.info("用户信息:{}", userMessageJsonObject.toJSONString());
-
-        if (userMessageJsonObject != null) {
-            try {
-                //用户昵称
-                String nickName = userMessageJsonObject.getString("nickname");
-                //用户性别
-                String sex = userMessageJsonObject.getString("sex");
-                sex = (sex.equals("1")) ? "男" : "女";
-                //用户唯一标识
-                String openid = userMessageJsonObject.getString("openid");
-                String headimgurl = userMessageJsonObject.getString("headimgurl");
-                pojoAuthorizedUsers.setAccess_token(accessToken);
-                pojoAuthorizedUsers.setOpenId(openid);
-                pojoAuthorizedUsers.setName(nickName);
-                pojoAuthorizedUsers.setSex(sex);
-                pojoAuthorizedUsers.setHeadImgUrl(headimgurl);
-                log.info("用户昵称:{}, 用户性别:{}, OpenId:{}, 用户头像：{}", nickName, sex, openid, headimgurl);
-            } catch (JSONException e) {
-                log.error("获取用户信息失败");
-            }
-        }
-
-        return pojoAuthorizedUsers;
+    /*
+     * @author: Gupern
+     * @date: 2022/3/6 2:35
+     * @description: 获取小程序的openid, 直接透传微信服务器的返回
+     *              openid, session_key, unionid, errcode, errmsg
+     */
+    public static Object getMiniProgramSession(String code, String appId, String appSecret) {
+        String url = String.format("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", appId, appSecret, code);
+        log.info("url:{}", url);
+        JSONObject resJson = restTemplate.getForObject(url, JSONObject.class);
+        log.info("resJson:{}", resJson);
+        return resJson;
     }
 }

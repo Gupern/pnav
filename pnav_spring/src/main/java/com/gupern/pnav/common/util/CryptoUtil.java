@@ -1,7 +1,8 @@
 package com.gupern.pnav.common.util;
 
-import com.gupern.pnav.wechat.util.CodeUtil;
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,11 +13,10 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * @author: guper
+ * @author: Gupern
  * @date: 2022/3/5 16:54
  * @description: 密码学相关工具 some crypto tools
  * 参考链接： https://www.cnblogs.com/zfding/p/9268245.html
@@ -182,7 +182,7 @@ public class CryptoUtil {
     }
 
     private String base64(byte[] res) {
-        return Base64.encode(res);
+        return Base64.getEncoder().encodeToString(res);
     }
 
     /**
@@ -349,7 +349,7 @@ public class CryptoUtil {
      * @return
      */
     public String Base64Encode(String res) {
-        return Base64.encode(res.getBytes());
+        return Base64.getEncoder().encodeToString(res.getBytes());
     }
 
     /**
@@ -358,7 +358,7 @@ public class CryptoUtil {
      * @param res
      * @return
      */
-    public String Base64Decode(String res) {
-        return new String(Base64.decode(res));
+    public String Base64Decode(String res) throws IOException {
+        return Arrays.toString(Base64.getDecoder().decode(res.getBytes()));
     }
 }
