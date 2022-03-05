@@ -1,4 +1,4 @@
-package com.gupern.pnav.common;
+package com.gupern.pnav.common.bean;
 
 import lombok.Data;
 

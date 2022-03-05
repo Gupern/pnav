@@ -15,6 +15,7 @@
 	<description>pnav project for money</description>
 	<properties>
 		<java.version>11</java.version>
+		<maven.build.timestamp.format>yyyy-MM-dd_HH_mm</maven.build.timestamp.format>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -140,7 +141,9 @@
 
 			<!-- 拷贝资源文件 -->
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
 				<executions>
 					<execution>
 						<id>copy-resources</id>
@@ -163,6 +166,7 @@
 
 
 		</plugins>
+		<finalName>${project.artifactId}-${project.version}-${maven.build.timestamp}</finalName>
 	</build>
 	<profiles>
 		<!--开发环境-->
@@ -176,7 +180,7 @@
 			</properties>
 			<build>
 				<filters>
-					<filter>${basedir}/src/main/resources/application-dev.properties</filter>
+					<filter>${basedir}/src/main/resources/application.properties</filter>
 				</filters>
 			</build>
 		</profile>

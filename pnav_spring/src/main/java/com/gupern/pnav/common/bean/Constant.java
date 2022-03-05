@@ -1,4 +1,4 @@
-package com.gupern.pnav.common;
+package com.gupern.pnav.common.bean;
 
 /**
  * 常量类
@@ -14,4 +14,5 @@ public class Constant {
     public static  final String PASSWORD_FAILED_CODE= "998";
     public static  final String PASSWORD_FAILED_MSG= "未输入密码";
     public static  final String OPENID_FAILED_MSG= "获取openId失败";
+    public static  final String RESPONSE_WECHAT_CHECK_FAILED_MSG= "验签失败";
 }

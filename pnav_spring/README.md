@@ -21,7 +21,7 @@ PNAV后台代码仓库，使用spring cloud框架
 - main.resources.mapper: 存放Mybatis Mapper XML的文件夹
     - H5Mapper******.xml，Mapper放前面，方便文件排序
     - PcMapper******.xml，Mapper放前面，方便文件排序
-- main.resources.application.properties: 配置文件
+- main.resources.application-{env}.properties: 配置文件
 ```
 
 #### 约定
@@ -34,8 +34,13 @@ PNAV后台代码仓库，使用spring cloud框架
 db名: pnav
 
 ## 命令
+- 使用maven package后，lib和jar会分离，只有第一次需要上传lib包，后续如果没有引用其他模块，就只需要更新jar包即可
+
 #### 打包后运行命令，需指定properties文件
-`java -jar .\pnav-1.0-SNAPSHOT.jar  --spring.config.location=resources/application.properties`
+`java -jar .\pnav-1.0-SNAPSHOT.jar  --spring.config.location=resources/application-{env}.properties`
+#### IDEA工具配置参数
+在启动时配置工作目录和profile.active=dev
+![idea配置图片](doc/idea-config.png)
 #### linux启动命令，指定生产配置文件，并输出日志文件到pnav.log并后台运行
 `nohup java -jar pnav-1.0-SNAPSHOT.jar --spring.config.location=resources/application-prod.properties > pnav.log 2&>1 &`
 #### 查看日志
