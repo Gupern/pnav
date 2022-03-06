@@ -1,17 +1,25 @@
 package com.gupern.pnav.wechat.util;
 
 import com.alibaba.fastjson.JSONObject;
-import com.gupern.pnav.common.util.RequestUtil;
+import com.gupern.pnav.common.util.*;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Random;
 
-import static com.gupern.pnav.common.util.CryptoUtil.byteToStr;
+import static com.gupern.pnav.common.util.CryptoUtil.*;
+import static com.gupern.pnav.common.util.SHA1.getSHA1;
 
 public class WechatUtil {
     private static final Logger log = LoggerFactory.getLogger(WechatUtil.class);
@@ -38,7 +46,7 @@ public class WechatUtil {
         for (int i = 0; i < arr.length; i++) {
             content.append(arr[i]);
         }
-        MessageDigest md = null;
+        MessageDigest md;
         String tmpStr = null;
 
         try {
@@ -50,7 +58,6 @@ public class WechatUtil {
             e.printStackTrace();
         }
         log.info("-----执行微信签名加密认证-----:{}", token);
-        content = null; // 清空content
         // 将sha1加密后的字符串可与signature对比，标识该请求来源于微信
         return tmpStr != null && tmpStr.equals(signature.toUpperCase());
     }
@@ -81,4 +88,256 @@ public class WechatUtil {
         log.info("resJson:{}", resJson);
         return resJson;
     }
+
+    // 以下内容引用微信官方加解密包，主要为了改写解密时兼容json格式
+    Charset CHARSET = StandardCharsets.UTF_8;
+    Base64 base64 = new Base64();
+    byte[] aesKey;
+    String token;
+    String appId;
+
+    /**
+     * 构造函数
+     * @param token 公众平台上，开发者设置的token
+     * @param encodingAesKey 公众平台上，开发者设置的EncodingAESKey
+     * @param appId 公众平台appid
+     *
+     * @throws AesException 执行失败，请查看该异常的错误码和具体的错误信息
+     */
+    public WechatUtil(String token, String encodingAesKey, String appId) throws AesException {
+        if (encodingAesKey.length() != 43) {
+            throw new AesException(AesException.IllegalAesKey);
+        }
+
+        this.token = token;
+        this.appId = appId;
+        aesKey = Base64.decodeBase64(encodingAesKey + "=");
+    }
+    // 随机生成16位字符串
+    String getRandomStr() {
+        String base = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < 16; i++) {
+            int number = random.nextInt(base.length());
+            sb.append(base.charAt(number));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 对明文进行加密.
+     *
+     * @param text 需要加密的明文
+     * @return 加密后base64编码的字符串
+     * @throws AesException aes加密失败
+     */
+    public String encrypt(String randomStr, String text) throws AesException {
+        ByteGroup byteCollector = new ByteGroup();
+        byte[] randomStrBytes = randomStr.getBytes(CHARSET);
+        byte[] textBytes = text.getBytes(CHARSET);
+        byte[] networkBytesOrder = getNetworkBytesOrder(textBytes.length);
+        byte[] appidBytes = appId.getBytes(CHARSET);
+
+        // randomStr + networkBytesOrder + text + appid
+        byteCollector.addBytes(randomStrBytes);
+        byteCollector.addBytes(networkBytesOrder);
+        byteCollector.addBytes(textBytes);
+        byteCollector.addBytes(appidBytes);
+
+        // ... + pad: 使用自定义的填充方式对明文进行补位填充
+        byte[] padBytes = PKCS7Encoder.encode(byteCollector.size());
+        byteCollector.addBytes(padBytes);
+
+        // 获得最终的字节流, 未加密
+        byte[] unencrypted = byteCollector.toBytes();
+
+        try {
+            // 设置加密模式为AES的CBC模式
+            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+            SecretKeySpec keySpec = new SecretKeySpec(aesKey, "AES");
+            IvParameterSpec iv = new IvParameterSpec(aesKey, 0, 16);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, iv);
+
+            // 加密
+            byte[] encrypted = cipher.doFinal(unencrypted);
+
+            // 使用BASE64对加密后的字符串进行编码
+            String base64Encrypted = base64.encodeToString(encrypted);
+
+            return base64Encrypted;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new AesException(AesException.EncryptAESError);
+        }
+    }
+
+    /**
+     * 对密文进行解密.
+     *
+     * @param text 需要解密的密文
+     * @return 解密得到的明文
+     * @throws AesException aes解密失败
+     */
+    public String decrypt(String text) throws AesException {
+        byte[] original;
+        try {
+            // 设置解密模式为AES的CBC模式
+            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+            SecretKeySpec key_spec = new SecretKeySpec(aesKey, "AES");
+            IvParameterSpec iv = new IvParameterSpec(Arrays.copyOfRange(aesKey, 0, 16));
+            cipher.init(Cipher.DECRYPT_MODE, key_spec, iv);
+
+            // 使用BASE64对密文进行解码
+            byte[] encrypted = Base64.decodeBase64(text);
+
+            // 解密
+            original = cipher.doFinal(encrypted);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new AesException(AesException.DecryptAESError);
+        }
+
+        String xmlContent, from_appid;
+        try {
+            // 去除补位字符
+            byte[] bytes = PKCS7Encoder.decode(original);
+
+            // 分离16位随机字符串,网络字节序和AppId
+            byte[] networkOrder = Arrays.copyOfRange(bytes, 16, 20);
+
+            int xmlLength = recoverNetworkBytesOrder(networkOrder);
+
+            xmlContent = new String(Arrays.copyOfRange(bytes, 20, 20 + xmlLength), CHARSET);
+            from_appid = new String(Arrays.copyOfRange(bytes, 20 + xmlLength, bytes.length),
+                    CHARSET);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new AesException(AesException.IllegalBuffer);
+        }
+
+        // appid不相同的情况
+        if (!from_appid.equals(appId)) {
+            throw new AesException(AesException.ValidateAppidError);
+        }
+        return xmlContent;
+
+    }
+
+    /**
+     * 将公众平台回复用户的消息加密打包.
+     * <ol>
+     * 	<li>对要发送的消息进行AES-CBC加密</li>
+     * 	<li>生成安全签名</li>
+     * 	<li>将消息密文和安全签名打包成xml格式</li>
+     * </ol>
+     *
+     * @param replyMsg 公众平台待回复用户的消息，xml格式的字符串
+     * @param timeStamp 时间戳，可以自己生成，也可以用URL参数的timestamp
+     * @param nonce 随机串，可以自己生成，也可以用URL参数的nonce
+     *
+     * @return 加密后的可以直接回复用户的密文，包括msg_signature, timestamp, nonce, encrypt的xml格式的字符串
+     * @throws AesException 执行失败，请查看该异常的错误码和具体的错误信息
+     */
+    public String encryptMsg(String replyMsg, String timeStamp, String nonce) throws AesException {
+        // 加密
+        String encrypt = encrypt(getRandomStr(), replyMsg);
+
+        // 生成安全签名
+        if (timeStamp == "") {
+            timeStamp = Long.toString(System.currentTimeMillis());
+        }
+
+        String signature = getSHA1(token, timeStamp, nonce, encrypt);
+
+        // System.out.println("发送给平台的签名是: " + signature[1].toString());
+        // 生成发送的xml
+        String result = XMLParse.generate(encrypt, signature, timeStamp, nonce);
+        return result;
+    }
+
+    /**
+     * 检验消息的真实性，并且获取解密后的明文.
+     * <ol>
+     * 	<li>利用收到的密文生成安全签名，进行签名验证</li>
+     * 	<li>若验证通过，则提取xml中的加密消息</li>
+     * 	<li>对消息进行解密</li>
+     * </ol>
+     *
+     * @param msgSignature 签名串，对应URL参数的msg_signature
+     * @param timeStamp 时间戳，对应URL参数的timestamp
+     * @param nonce 随机串，对应URL参数的nonce
+     * @param postData 密文，对应POST请求的数据
+     *
+     * @return 解密后的原文
+     * @throws AesException 执行失败，请查看该异常的错误码和具体的错误信息
+     */
+    public String decryptMsg(String msgSignature, String timeStamp, String nonce, String postData)
+            throws AesException {
+
+        // 密钥，公众账号的app secret
+        // 提取密文
+        Object[] encrypt = XMLParse.extract(postData);
+
+        // 验证安全签名
+        String signature = getSHA1(token, timeStamp, nonce, encrypt[1].toString());
+
+        // 和URL中的签名比较是否相等
+        // System.out.println("第三方收到URL中的签名：" + msg_sign);
+        // System.out.println("第三方校验签名：" + signature);
+        if (!signature.equals(msgSignature)) {
+            throw new AesException(AesException.ValidateSignatureError);
+        }
+
+        // 解密
+        String result = decrypt(encrypt[1].toString());
+        return result;
+    }
+
+    public String decryptMsg(String msgSignature, String timeStamp, String nonce, JSONObject postData)
+            throws AesException {
+
+        // 密钥，公众账号的app secret
+        // 提取密文
+        String encrypt = postData.getString("Encrypt");
+        log.info("encrypt:{}",encrypt);
+
+        // 验证安全签名
+        String signature = getSHA1(token, timeStamp, nonce, encrypt);
+        log.info("signature:{}",signature);
+
+        // 和URL中的签名比较是否相等
+        // System.out.println("第三方收到URL中的签名：" + msg_sign);
+        // System.out.println("第三方校验签名：" + signature);
+        if (!signature.equals(msgSignature)) {
+            throw new AesException(AesException.ValidateSignatureError);
+        }
+
+        // 解密
+        String result = decrypt(encrypt);
+        return result;
+    }
+
+    /**
+     * 验证URL
+     * @param msgSignature 签名串，对应URL参数的msg_signature
+     * @param timeStamp 时间戳，对应URL参数的timestamp
+     * @param nonce 随机串，对应URL参数的nonce
+     * @param echoStr 随机串，对应URL参数的echostr
+     *
+     * @return 解密之后的echostr
+     * @throws AesException 执行失败，请查看该异常的错误码和具体的错误信息
+     */
+    public String verifyUrl(String msgSignature, String timeStamp, String nonce, String echoStr)
+            throws AesException {
+        String signature = getSHA1(token, timeStamp, nonce, echoStr);
+
+        if (!signature.equals(msgSignature)) {
+            throw new AesException(AesException.ValidateSignatureError);
+        }
+
+        String result = decrypt(echoStr);
+        return result;
+    }
+    // 引用微信官方包结束
 }

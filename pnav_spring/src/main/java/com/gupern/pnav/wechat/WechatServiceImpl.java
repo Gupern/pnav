@@ -2,8 +2,10 @@ package com.gupern.pnav.wechat;
 
 import com.alibaba.fastjson.JSONObject;
 import com.gupern.pnav.common.bean.Constant;
+import com.gupern.pnav.common.bean.ResponseEnum;
 import com.gupern.pnav.common.bean.ResultMsg;
 import com.gupern.pnav.common.util.CryptoUtil;
+import com.gupern.pnav.wechat.util.WechatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +13,10 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.gupern.pnav.wechat.util.WechatUtil.*;
+import java.io.IOException;
+
+import static com.gupern.pnav.wechat.util.WechatUtil.getMiniProgramAccessToken;
+import static com.gupern.pnav.wechat.util.WechatUtil.getMiniProgramSession;
 
 @Service
 public class WechatServiceImpl implements WechatService {
@@ -24,19 +29,13 @@ public class WechatServiceImpl implements WechatService {
     @Value("${wechat.miniprogram.appsecret.encoded}")
     private String appSecretEncoded = "asdfasdfasdf";
 
-    @Value("${crypto.aes.key}")
-    private String aesKey = "asdfasdfa";
-
     // 与接口配置信息中的Token要一致
     @Value("${wechat.miniprogram.token}")
     private String token = "pnav007";
 
     public Object sayHelloWorld() {
-        System.out.println(aesKey);
         System.out.println(appId);
         System.out.println(appSecretEncoded);
-        String appSecret = getAppSecret(aesKey,appSecretEncoded);
-        System.out.println(appSecret);
         return "hello world";
     }
 
@@ -46,7 +45,12 @@ public class WechatServiceImpl implements WechatService {
      * @description: 获取access_token TODO 不可暴露到互联网，只开发测试用
      */
     public Object getAccessToken() {
-        return getMiniProgramAccessToken(appId, getAppSecret(aesKey, appSecretEncoded));
+        try {
+            return getMiniProgramAccessToken(appId, CryptoUtil.getInstance(null).Base64Decode(appSecretEncoded));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResultMsg.fail(ResponseEnum.REQUEST_FAILED.getCode(), ResponseEnum.REQUEST_FAILED.getMsg());
+        }
     }
 
     /*
@@ -58,7 +62,12 @@ public class WechatServiceImpl implements WechatService {
         log.info("dto openid:{}", dto);
         String code = dto.getString("code");
         log.info("dto openid:{}", code);
-        return getMiniProgramSession(code, appId, getAppSecret(aesKey, appSecretEncoded));
+        try {
+            return getMiniProgramSession(code, appId, CryptoUtil.getInstance(null).Base64Decode(appSecretEncoded));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResultMsg.fail(ResponseEnum.REQUEST_FAILED.getCode(), ResponseEnum.REQUEST_FAILED.getMsg());
+        }
     }
 
     /*
@@ -67,36 +76,33 @@ public class WechatServiceImpl implements WechatService {
      * @description: 微信小程序推送消息
      */
     public Object miniprogramPush(HttpServletRequest request, JSONObject dto) {
-        String requestMethod = request.getMethod();
-        // 如果是GET方式，取parameter
         try {
-            if ("GET".equals(requestMethod)) {
-                dto = new JSONObject(); // GET 请求dto可能为null
-                dto.put("echostr", request.getParameter("echostr"));
-                dto.put("nonce", request.getParameter("nonce"));
-                dto.put("timestamp", request.getParameter("timestamp"));
-                dto.put("signature", request.getParameter("signature"));
-            }
+            String echostr = request.getParameter("echostr");
+            String nonce = request.getParameter("nonce");
+            String timestamp = request.getParameter("timestamp");
+            String signature = request.getParameter("signature");
+            String msgSignature = request.getParameter("msg_signature");
+            String appSecret = CryptoUtil.getInstance(null).Base64Decode(appSecretEncoded);
+            log.info("nonce:{}, timestamp:{}, signature:{}, appSecret:{}, msg_signature:{}", nonce, timestamp, signature, appSecret, msgSignature);
+            // TODO 1.  解密
+            WechatUtil wechatUtil = new WechatUtil(token, appSecret, appId);
+            String planeText = wechatUtil.decryptMsg(msgSignature, timestamp, nonce, dto);
+            log.info("planeText: {}", planeText);
+            // TODO 2.  并接收入库
+            // TODO 3.  返回正式数据
+
+            /*
+             接入验证时：若确认此次 GET 请求来自微信服务器，请原样返回 echostr 参数内容，则接入生效，成为开发者成功，否则接入失败。
+             return echostr;
+             接入成功后，服务器收到请求必须做出下述回复，这样微信服务器才不会对此作任何处理，并且不会发起重试，否则，将出现严重的错误提示。详见下面说明：
+             1. 直接回复success（推荐方式）
+             2. 直接回复空串（指字节长度为0的空字符串，而不是结构体中content字段的内容为空）
+             3. 若接口文档有指定返回内容，应按文档说明返回
+             */
+            return "success";
         } catch (Exception e) {
             e.printStackTrace();
-            return ResultMsg.fail(Constant.RESPONSE_FAILED_CODE,Constant.RESPONSE_FAILED_MSG);
-        }
-
-        log.info(dto.toString());
-        if (checkSignature(dto, token)) {
-            return dto.getString("echostr");
-        } else {
             return ResultMsg.fail(Constant.RESPONSE_FAILED_CODE, Constant.RESPONSE_WECHAT_CHECK_FAILED_MSG);
         }
-    }
-
-    /*
-     * @author: Gupern
-     * @date: 2022/3/5 18:12
-     * @description: 解密appsecret
-     */
-    private String getAppSecret(String aesKey, String appSecretEncoded){
-        CryptoUtil cryptoUtil = CryptoUtil.getInstance(null);
-        return cryptoUtil.AESdecode(appSecretEncoded,aesKey);
     }
 }
