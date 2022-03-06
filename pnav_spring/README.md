@@ -3,6 +3,29 @@
 #### 介绍
 PNAV后台代码仓库，使用spring cloud框架
 
+#### 注意
+需要引入/lib/下的两个jar包，在pom文件中加入dependency，且在build里加入
+```
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.9</version>
+			<scope>system</scope>
+			<systemPath>${pom.basedir}/lib/commons-codec-1.9.jar</systemPath>
+		</dependency>
+							<!--MANIFEST.MF 中 Class-Path 加入本地引入的lib包-->
+							<Class-Path>lib/commons-codec-1.9.jar</Class-Path>
+
+ * 说明：异常java.security.InvalidKeyException:illegal Key Size的解决方案
+ * <ol>
+ * 	<li>在官方网站下载JCE无限制权限策略文件（JDK7的下载地址：
+ *      http://www.oracle.com/technetwork/java/javase/downloads/jce-7-download-432124.html</li>
+ * 	<li>下载后解压，可以看到local_policy.jar和US_export_policy.jar以及readme.txt</li>
+ * 	<li>如果安装了JRE，将两个jar文件放到%JRE_HOME%\lib\security目录下覆盖原来的文件</li>
+ * 	<li>如果安装了JDK，将两个jar文件放到%JDK_HOME%\jre\lib\security目录下覆盖原来文件</li>
+ 
+ https://zhangboyi.blog.csdn.net/article/details/115285334
+```
 #### 软件架构
 - 按官网建议，小项目按模块来分，而不是按功能来分，更方便开发，详见: `https://docs.spring.io/spring-boot/docs/2.4.4/reference/htmlsingle/#using-boot-locating-the-main-class`
 ```
@@ -49,3 +72,8 @@ db名: pnav
 `curl localhost:8080/client/list/1/2`
 
 
+
+## 其他资料
+#### 微信加解密工具
+`https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/2.0/api/Before_Develop/Technical_Plan.html`
+`https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/2.0/api/Before_Develop/Message_encryption_and_decryption.html`
