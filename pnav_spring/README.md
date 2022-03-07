@@ -47,6 +47,8 @@ PNAV后台代码仓库，使用spring cloud框架
 - main.resources.application-{env}.properties: 配置文件
 ```
 
+- 尽量使用springboot的sql注解来进行sql操作，减少xml文件，提高效率，参考：`https://spring.io/guides/gs/accessing-data-mysql/`
+
 #### 约定
 - dao：数据库访问的object
 - dto：接收前端的object
