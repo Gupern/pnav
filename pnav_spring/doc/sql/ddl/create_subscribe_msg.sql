@@ -29,6 +29,8 @@ CREATE TABLE `subscribe_msg`
     `subscribe_status_string` text NOT NULL COMMENT '订阅结果（accept接收；reject拒收）',
     `popup_scene`             text NOT NULL COMMENT '弹窗场景，0代表在小程序页面内',
     `msg_type`                text NOT NULL COMMENT '信息类型，默认为event',
+    `from_user_name`          text NOT NULL COMMENT '订阅者openid',
+    `event`                   text NOT NULL COMMENT '信息事件',
     `created_time`            datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_time`            datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     PRIMARY KEY (`id`)
