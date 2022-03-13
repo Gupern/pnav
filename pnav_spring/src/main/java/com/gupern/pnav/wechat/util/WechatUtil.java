@@ -5,6 +5,7 @@ import com.gupern.pnav.common.util.*;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.web.client.RestTemplate;
 
 import javax.crypto.Cipher;
@@ -65,7 +66,7 @@ public class WechatUtil {
     /*
      * @author: Gupern
      * @date: 2022/3/6 0:35
-     * @description: 获取小程序的access_token
+     * @description: 请求微信服务器，获取最新的小程序的access_token
      * TODO 搭建redis，增加token到缓存
      */
     public static String getMiniProgramAccessToken(String appId, String appSecret) {
@@ -74,6 +75,17 @@ public class WechatUtil {
         JSONObject resJson = restTemplate.getForObject(url, JSONObject.class);
         log.info("resJson:{}", resJson);
         return Objects.requireNonNull(resJson).getString("access_token");
+    }
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/13 12:24
+     * @description:  TODO 从cache中获取accessToken
+     * 有效期2小时
+     */
+    @CachePut(cacheNames = "local", key = "#appId")
+    public String getMpCacheToken(String appId, String appSecret) {
+        return "";
     }
 
     /*

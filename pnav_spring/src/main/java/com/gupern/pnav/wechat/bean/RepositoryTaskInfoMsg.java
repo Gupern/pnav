@@ -1,6 +1,11 @@
 package com.gupern.pnav.wechat.bean;
 
+import com.alibaba.fastjson.JSONObject;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 /**
  * @author: Gupern
@@ -10,4 +15,6 @@ import org.springframework.data.repository.CrudRepository;
  * CRUD refers Create, Read, Update, Delete
  */
 public interface RepositoryTaskInfoMsg extends CrudRepository<DaoSubscribeMsg, Integer> {
+    @Query(value = "select * from task_info where openid = ?1 ", nativeQuery = true)
+    List<JSONObject> findAllTasks(String openid);
 }
