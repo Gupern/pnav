@@ -90,22 +90,16 @@ public class ScheduledTasks {
 
         // 循环遍历，为所有订阅者进行推送
         for (JSONObject item : allFromUserName) {
-            String fromUserName = item.getString("from_user_name");
+            String openid = item.getString("from_user_name");
             String templateId = item.getString("template_id");
 
-            List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasks(fromUserName);
-            log.info("openid:{}, allTasksList:{}", fromUserName, allTasksList);
+            List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasks(openid);
+            log.info("openid:{}, allTasksList:{}", openid, allTasksList);
 
-            // 获取随机事项
-            Random random = new Random();
-            if (allTasksList.size() <= 0) {
-                log.info("there are no tasks");
-                continue; // 如果没有设置task，则跳过
-            }
-            int n = random.nextInt(allTasksList.size());
-            JSONObject choice = allTasksList.get(n);
+            String thing = WechatUtil.getRandomTask(allTasksList);
+            if (thing == null) continue; // 如果没有设置task，则跳过
+
             JSONObject tmpThing2 = new JSONObject();
-            String thing = String.format("唤醒2分热爱 %s", choice.getString("task"));
             tmpThing2.put("value", thing);
 
             // 获取当前时间
@@ -119,7 +113,7 @@ public class ScheduledTasks {
 
             JSONObject requestJson = new JSONObject();
             requestJson.put("data", tmpData);
-            requestJson.put("touser", fromUserName);
+            requestJson.put("touser", openid);
             requestJson.put("template_id", templateId);
             requestJson.put("page", "pages/index/index");
             requestJson.put("miniprogram_state", miniprogramState);

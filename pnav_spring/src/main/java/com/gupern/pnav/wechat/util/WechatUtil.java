@@ -2,9 +2,11 @@ package com.gupern.pnav.wechat.util;
 
 import com.alibaba.fastjson.JSONObject;
 import com.gupern.pnav.common.util.*;
+import com.gupern.pnav.wechat.bean.RepositoryTaskInfoMsg;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.web.client.RestTemplate;
 
@@ -16,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
@@ -26,6 +29,9 @@ public class WechatUtil {
     private static final Logger log = LoggerFactory.getLogger(WechatUtil.class);
 
     private static final RestTemplate restTemplate = RequestUtil.getInstance().myRestTemplate;
+
+    @Autowired
+    private RepositoryTaskInfoMsg repositoryTaskInfoMsg;
 
     /*
      * @author: Gupern
@@ -368,4 +374,22 @@ public class WechatUtil {
         log.info(responseJson.toString());
         return false;
     }
+
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/13 14:22
+     * @description: 根据openid随机获取该用户的一个task
+     */
+    public static String getRandomTask(List<JSONObject> allTasksList) {
+        // 获取随机事项
+        Random random = new Random();
+        if (allTasksList.size() <= 0) {
+            log.info("there are no tasks");
+            return null;
+        }
+        int n = random.nextInt(allTasksList.size());
+        return allTasksList.get(n).getString("task");
+    }
+
 }

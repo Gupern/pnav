@@ -44,4 +44,11 @@ public class WechatController {
     public Object getOpenid(@RequestBody JSONObject dto) {
         return service.getSession(dto);
     }
+
+    // TODO 后续可进行session校验 增加安全性
+    @RequestMapping(value = "/miniprogram/get_task", method = POST)
+    @ResponseBody
+    public Object getTask(@RequestBody JSONObject dto) {
+        return service.getTask(dto);
+    }
 }

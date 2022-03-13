@@ -48,13 +48,13 @@ public class ResultMsg implements Serializable {
         this.data = data;
     }
 
-    public static ResultMsg seccese(ResponseEnum responseEnum,Object data){
+    public static ResultMsg success(ResponseEnum responseEnum,Object data){
         return new ResultMsg(responseEnum.getCode(),responseEnum.getMsg(),data);
     }
-    public static ResultMsg seccese(String code,String msg, Object data){
+    public static ResultMsg success(String code,String msg, Object data){
         return new ResultMsg(Constant.RESPONSE_SUCCEED_CODE,msg,data);
     }
-    public static ResultMsg seccese(String code,String msg, String data){
+    public static ResultMsg success(String code,String msg, String data){
         return new ResultMsg(Constant.RESPONSE_SUCCEED_CODE,msg,data);
     }
     public static ResultMsg fail(ResponseEnum responseEnum){
