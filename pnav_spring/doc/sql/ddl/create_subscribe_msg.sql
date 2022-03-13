@@ -35,3 +35,7 @@ CREATE TABLE `subscribe_msg`
     `updated_time`            datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB COMMENT = '订阅消息表';
+
+alter table subscribe_msg modify `popup_scene` text default null comment '弹窗场景，0代表在小程序页面内';
+alter table subscribe_msg modify `msg_type` text default null comment '信息类型，默认为event';
+alter table subscribe_msg modify `event` text default null comment '信息事件';

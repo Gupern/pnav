@@ -10,4 +10,5 @@ public interface WechatService {
     Object miniprogramPush(HttpServletRequest httpServletRequest, JSONObject dto);
     Object getAccessToken();
     Object getSession(JSONObject dto);
+    Object getTask(JSONObject dto);
 }

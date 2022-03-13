@@ -14,7 +14,7 @@ import java.sql.Date;
  */
 
 @Data
-@Entity
+@Entity(name = "SubscribeMsg")
 @Table(name = "subscribe_msg") // 指定表名
 public class DaoSubscribeMsg {
     @Id // 表示这是primary key
