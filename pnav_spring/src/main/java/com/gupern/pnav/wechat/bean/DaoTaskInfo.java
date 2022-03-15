@@ -20,6 +20,7 @@ public class DaoTaskInfo {
 //    @GeneratedValue(strategy = GenerationType.AUTO) // 表示自增
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    private String openid;
     private String project;
     private String task;
     private String comment;

@@ -1,11 +1,14 @@
 package com.gupern.pnav.wechat;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.gupern.pnav.common.bean.Constant;
 import com.gupern.pnav.common.bean.ResponseEnum;
 import com.gupern.pnav.common.bean.ResultMsg;
 import com.gupern.pnav.common.util.CryptoUtil;
 import com.gupern.pnav.wechat.bean.DaoSubscribeMsg;
+import com.gupern.pnav.wechat.bean.DaoTaskInfo;
 import com.gupern.pnav.wechat.bean.RepositorySubscribeMsg;
 import com.gupern.pnav.wechat.bean.RepositoryTaskInfoMsg;
 import com.gupern.pnav.wechat.util.WechatUtil;
@@ -15,10 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.print.attribute.HashAttributeSet;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.gupern.pnav.wechat.util.WechatUtil.getMiniProgramAccessToken;
 import static com.gupern.pnav.wechat.util.WechatUtil.getMiniProgramSession;
@@ -137,6 +140,7 @@ public class WechatServiceImpl implements WechatService {
             return ResultMsg.fail(Constant.RESPONSE_FAILED_CODE, Constant.RESPONSE_WECHAT_CHECK_FAILED_MSG);
         }
     }
+
     /*
      * @author: Gupern
      * @date: 2022/3/13 14:32
@@ -149,4 +153,100 @@ public class WechatServiceImpl implements WechatService {
         String task = WechatUtil.getRandomTask(allTasksList);
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, task);
     }
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/15 20:22
+     * @description: 接收openid，返回用户的项目信息
+     * [{
+            "projectName": "project name",
+            "taskList": [{
+                "name": "task name",
+                "count": 3
+            }, {
+                "name": "夸人",
+                "count": 4
+            }]
+
+        }, {
+
+            "projectName": "project name",
+            "taskList": [{
+                "name": "task name",
+                "count": 3
+            }, {
+                "name": "夸人",
+                "count": 4
+            }]
+
+        }]
+     */
+    public Object getPersonalProjectInfo(JSONObject dto) {
+        String openid = dto.getString("openid");
+        List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasks(openid);
+        log.info("openid:{}, allTasksList:{}", openid, allTasksList);
+
+        // 建立一个map 与返回的格式不同，便于查找projectName
+        JSONObject projectInfoTmp = new JSONObject();
+        for (JSONObject item : allTasksList) {
+            String project = item.getString("project");
+            String task = item.getString("task");
+
+            JSONArray itemOrigin = projectInfoTmp.getJSONArray(project);
+            JSONArray itemTmp = new JSONArray();
+            // 如果已经包含该project，则添加
+            if (itemOrigin != null) {
+                itemTmp = itemOrigin;
+                log.info("itemOrigin is not null:{}", itemTmp.toString());
+            }
+            JSONObject tmp = new JSONObject();
+            tmp.put("name", task);
+            tmp.put("count", 0); // TODO 等后面添加
+            itemTmp.add(tmp);
+            // 更新数据
+            projectInfoTmp.put(project, itemTmp);
+        }
+        log.info("projectInfoTemp:{}", projectInfoTmp.toString());
+
+        // 拼装数据
+        JSONArray returnObj = new JSONArray();
+
+        for (Map.Entry<String, Object> stringObjectEntry : projectInfoTmp.entrySet()) {
+            String key = stringObjectEntry.getKey();
+            Object value = stringObjectEntry.getValue();
+            log.info(key + "----" + value);
+            JSONObject tmp = new JSONObject();
+            tmp.put("projectName", key);
+            tmp.put("taskList", value);
+            returnObj.add(tmp);
+        }
+        log.info("returnObj:{}", returnObj);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
+    /*
+     * @author: Gupern
+     * @date: 2022/3/16 0:33
+     * @description: 添加task信息
+     */
+    public Object updatePersonalProjectInfo(JSONObject dto) {
+        String openid = dto.getString("openid");
+        String project = dto.getString("project");
+        String task = dto.getString("task");
+        DaoTaskInfo daoTaskInfo = new DaoTaskInfo();
+        daoTaskInfo.setOpenid(openid);
+        daoTaskInfo.setProject(project);
+        daoTaskInfo.setTask(task);
+        repositoryTaskInfoMsg.save(daoTaskInfo);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, "success");
+    }
+
+//  新建接口时的template
+//    /*
+//     * @author: Gupern
+//     * @date: 2022/3/15 20:22
+//     * @description:
+//     */
+//    public Object getPersonalProjectInfo(JSONObject dto) {
+//        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+//    }
 }

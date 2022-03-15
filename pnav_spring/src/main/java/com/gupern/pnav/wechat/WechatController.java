@@ -51,4 +51,16 @@ public class WechatController {
     public Object getTask(@RequestBody JSONObject dto) {
         return service.getTask(dto);
     }
+
+    @RequestMapping(value = "/miniprogram/get_personal_project_info", method = POST)
+    @ResponseBody
+    public Object getPersonalProjectInfo(@RequestBody JSONObject dto) {
+        return service.getPersonalProjectInfo(dto);
+    }
+
+    @RequestMapping(value = "/miniprogram/update_personal_project_info", method = POST)
+    @ResponseBody
+    public Object updatePersonalProjectInfo(@RequestBody JSONObject dto) {
+        return service.updatePersonalProjectInfo(dto);
+    }
 }

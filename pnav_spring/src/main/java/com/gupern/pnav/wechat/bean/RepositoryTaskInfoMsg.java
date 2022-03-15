@@ -14,7 +14,7 @@ import java.util.List;
  * This will be AUTO IMPLEMENTED by Spring into a Bean called RepositoryXXX
  * CRUD refers Create, Read, Update, Delete
  */
-public interface RepositoryTaskInfoMsg extends CrudRepository<DaoSubscribeMsg, Integer> {
+public interface RepositoryTaskInfoMsg extends CrudRepository<DaoTaskInfo, Integer> {
     @Query(value = "select * from task_info where openid = ?1 ", nativeQuery = true)
     List<JSONObject> findAllTasks(String openid);
 }

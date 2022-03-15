@@ -10,3 +10,4 @@ CREATE TABLE `task_info`
     `updated_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB COMMENT = '任务表';
+alter table task_info modify `comment` text default null comment '任务执行心得';
