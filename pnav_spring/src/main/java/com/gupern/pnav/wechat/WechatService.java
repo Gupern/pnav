@@ -11,6 +11,8 @@ public interface WechatService {
     Object getAccessToken();
     Object getSession(JSONObject dto);
     Object getTask(JSONObject dto);
+    Object finishTask(JSONObject dto);
+    Object changeTask(JSONObject dto);
     Object getPersonalProjectInfo(JSONObject dto);
     Object updatePersonalProjectInfo(JSONObject dto);
 }

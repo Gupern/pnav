@@ -24,6 +24,9 @@ public class DaoTaskInfo {
     private String project;
     private String task;
     private String comment;
+    private long count;
+    @Column(name = "change_count")
+    private long changeCount;
     private int status;
     // 增加此注解，否则会为null
     @CreationTimestamp

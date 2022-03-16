@@ -52,6 +52,18 @@ public class WechatController {
         return service.getTask(dto);
     }
 
+    @RequestMapping(value = "/miniprogram/finish_task", method = POST)
+    @ResponseBody
+    public Object finishTask(@RequestBody JSONObject dto) {
+        return service.finishTask(dto);
+    }
+
+    @RequestMapping(value = "/miniprogram/change_task", method = POST)
+    @ResponseBody
+    public Object changeTask(@RequestBody JSONObject dto) {
+        return service.changeTask(dto);
+    }
+
     @RequestMapping(value = "/miniprogram/get_personal_project_info", method = POST)
     @ResponseBody
     public Object getPersonalProjectInfo(@RequestBody JSONObject dto) {

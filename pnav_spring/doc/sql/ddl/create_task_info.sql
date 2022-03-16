@@ -11,3 +11,5 @@ CREATE TABLE `task_info`
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB COMMENT = '任务表';
 alter table task_info modify `comment` text default null comment '任务执行心得';
+alter table task_info add `count` bigint DEFAULT 0 comment '该任务执行完成的次数' after `comment`;
+alter table task_info add `change_count` bigint DEFAULT 0 comment '该任务换一个的次数' after `comment`;
