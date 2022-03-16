@@ -1,11 +1,13 @@
 package com.gupern.pnav.wechat;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.gupern.pnav.common.bean.Constant;
 import com.gupern.pnav.common.bean.ResponseEnum;
 import com.gupern.pnav.common.bean.ResultMsg;
 import com.gupern.pnav.common.util.CryptoUtil;
 import com.gupern.pnav.wechat.bean.DaoSubscribeMsg;
+import com.gupern.pnav.wechat.bean.DaoTaskInfo;
 import com.gupern.pnav.wechat.bean.RepositorySubscribeMsg;
 import com.gupern.pnav.wechat.bean.RepositoryTaskInfoMsg;
 import com.gupern.pnav.wechat.util.WechatUtil;
@@ -14,14 +16,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static com.gupern.pnav.wechat.util.WechatUtil.getMiniProgramAccessToken;
-import static com.gupern.pnav.wechat.util.WechatUtil.getMiniProgramSession;
+import static com.gupern.pnav.wechat.util.WechatUtil.*;
 
 @Service
 public class WechatServiceImpl implements WechatService {
@@ -137,16 +138,177 @@ public class WechatServiceImpl implements WechatService {
             return ResultMsg.fail(Constant.RESPONSE_FAILED_CODE, Constant.RESPONSE_WECHAT_CHECK_FAILED_MSG);
         }
     }
+
     /*
      * @author: Gupern
      * @date: 2022/3/13 14:32
      * @description: 小程序前端调用，获取一个任务
      */
     public Object getTask(JSONObject dto) {
-        String openid = dto.getString("openid");
-        List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasks(openid);
-        log.info("openid:{}, allTasksList:{}", openid, allTasksList);
-        String task = WechatUtil.getRandomTask(allTasksList);
+        List<JSONObject> allTasksList = getTaskListByOpenidAndTaskId(dto);
+        // 如果返回一个，一个元素的列表的随机也是该元素
+        JSONObject task = WechatUtil.getRandomTask(allTasksList);
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, task);
     }
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/15 20:22
+     * @description: 接收openid，返回用户的项目信息
+     * [{
+            "projectName": "project name",
+            "taskList": [{
+                "name": "task name",
+                "count": 3
+            }, {
+                "name": "夸人",
+                "count": 4
+            }]
+
+        }, {
+
+            "projectName": "project name",
+            "taskList": [{
+                "name": "task name",
+                "count": 3
+            }, {
+                "name": "夸人",
+                "count": 4
+            }]
+
+        }]
+     */
+    public Object getPersonalProjectInfo(JSONObject dto) {
+
+        List<JSONObject> allTasksList = getTaskListByOpenidAndTaskId(dto);;
+
+        // 建立一个map 与返回的格式不同，便于查找projectName
+        JSONObject projectInfoTmp = new JSONObject();
+        for (JSONObject item : allTasksList) {
+            String project = item.getString("project");
+            String task = item.getString("task");
+            String count = item.getString("count");
+            String changeCount = item.getString("change_count");
+
+            JSONArray itemOrigin = projectInfoTmp.getJSONArray(project);
+            JSONArray itemTmp = new JSONArray();
+            // 如果已经包含该project，则添加
+            if (itemOrigin != null) {
+                itemTmp = itemOrigin;
+                log.info("itemOrigin is not null:{}", itemTmp.toString());
+            }
+            JSONObject tmp = new JSONObject();
+            tmp.put("name", task);
+            tmp.put("count", count);
+            tmp.put("changeCount", changeCount);
+            itemTmp.add(tmp);
+            // 更新数据
+            projectInfoTmp.put(project, itemTmp);
+        }
+        log.info("projectInfoTemp:{}", projectInfoTmp.toString());
+
+        // 拼装数据
+        JSONArray returnObj = new JSONArray();
+
+        for (Map.Entry<String, Object> stringObjectEntry : projectInfoTmp.entrySet()) {
+            String key = stringObjectEntry.getKey();
+            Object value = stringObjectEntry.getValue();
+            log.info(key + "----" + value);
+            JSONObject tmp = new JSONObject();
+            tmp.put("projectName", key);
+            tmp.put("taskList", value);
+            returnObj.add(tmp);
+        }
+        log.info("returnObj:{}", returnObj);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/16 21:18
+     * @description: 通过openid和taskId获取任务
+     * 如果openid为空，则返回vistor的
+     * 如果taskId不为空，则返回一个
+     * 如果taskId为空，则返回全部
+     */
+    private List<JSONObject> getTaskListByOpenidAndTaskId(JSONObject dto) {
+        String openid = dto.getString("openid");
+        String taskId = dto.getString("taskId");
+
+        // 如果没有openid，则设置为vistor
+        if (openid == null || openid.equals("")) {
+            openid = "vistor";
+        }
+        List<JSONObject> allTasksList;
+        if (taskId == null || taskId.equals("")) {
+            log.info("findAllTasksByOpenid");
+            allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
+        } else {
+            log.info("findAllTasksByOpenidAndTaskId");
+            allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid, taskId);
+        }
+        log.info("openid:{}, taskId:{}, allTasksList:{}", openid, taskId, allTasksList);
+        return allTasksList;
+    }
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/16 0:33
+     * @description: 添加task信息
+     */
+    public Object updatePersonalProjectInfo(JSONObject dto) {
+        String openid = dto.getString("openid");
+        String project = dto.getString("project");
+        String task = dto.getString("task");
+        DaoTaskInfo daoTaskInfo = new DaoTaskInfo();
+        daoTaskInfo.setOpenid(openid);
+        daoTaskInfo.setProject(project);
+        daoTaskInfo.setTask(task);
+        repositoryTaskInfoMsg.save(daoTaskInfo);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, "success");
+    }
+    /*
+     * @author: Gupern
+     * @date: 2022/3/16 23:11
+     * @description: 完成任务，count + 1，返回新任务
+     */
+    @Transactional
+    public Object finishTask(JSONObject dto) {
+        String taskId = dto.getString("taskId");
+        String openid = dto.getString("openid");
+        List<JSONObject> tmpList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid,taskId);
+        JSONObject daoTaskInfo = tmpList.get(0);
+        daoTaskInfo.put("count", daoTaskInfo.getLongValue("count")+1);
+        repositoryTaskInfoMsg.save(JSONObject.toJavaObject(daoTaskInfo, DaoTaskInfo.class));
+
+        List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
+        JSONObject returnObj = getRandomTask(allTasksList);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
+
+    /*
+     * @author: Gupern
+     * @date: 2022/3/16 23:12
+     * @description: 更换任务，change_count + 1， 返回新任务
+     */
+    public Object changeTask(JSONObject dto) {
+        String taskId = dto.getString("taskId");
+        String openid = dto.getString("openid");
+        List<JSONObject> tmpList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid,taskId);
+        JSONObject daoTaskInfo = tmpList.get(0);
+        daoTaskInfo.put("change_count", daoTaskInfo.getLongValue("change_count")+1);
+        repositoryTaskInfoMsg.save(JSONObject.toJavaObject(daoTaskInfo, DaoTaskInfo.class));
+        List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
+        JSONObject returnObj = getRandomTask(allTasksList);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
+//  新建接口时的template
+//    /*
+//     * @author: Gupern
+//     * @date: 2022/3/15 20:22
+//     * @description:
+//     */
+//    public Object getPersonalProjectInfo(JSONObject dto) {
+//        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+//    }
 }

@@ -381,7 +381,7 @@ public class WechatUtil {
      * @date: 2022/3/13 14:22
      * @description: 根据openid随机获取该用户的一个task
      */
-    public static String getRandomTask(List<JSONObject> allTasksList) {
+    public static JSONObject getRandomTask(List<JSONObject> allTasksList) {
         // 获取随机事项
         Random random = new Random();
         if (allTasksList.size() <= 0) {
@@ -389,7 +389,7 @@ public class WechatUtil {
             return null;
         }
         int n = random.nextInt(allTasksList.size());
-        return allTasksList.get(n).getString("task");
+        return allTasksList.get(n);
     }
 
 }

@@ -91,12 +91,16 @@ public class ScheduledTasks {
         // 循环遍历，为所有订阅者进行推送
         for (JSONObject item : allFromUserName) {
             String openid = item.getString("from_user_name");
+            // 如果是访客的openid，则不推送
+            if (openid.equals("vistor")) {
+                continue;
+            }
             String templateId = item.getString("template_id");
 
-            List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasks(openid);
+            List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
             log.info("openid:{}, allTasksList:{}", openid, allTasksList);
 
-            String thing = WechatUtil.getRandomTask(allTasksList);
+            String thing = WechatUtil.getRandomTask(allTasksList).getString("task");
             if (thing == null) continue; // 如果没有设置task，则跳过
 
             JSONObject tmpThing2 = new JSONObject();
@@ -115,7 +119,8 @@ public class ScheduledTasks {
             requestJson.put("data", tmpData);
             requestJson.put("touser", openid);
             requestJson.put("template_id", templateId);
-            requestJson.put("page", "pages/index/index");
+            String page = String.format("pages/index/index?openid=%s&taskId=%s", openid, item.getString("id"));
+            requestJson.put("page", page);
             requestJson.put("miniprogram_state", miniprogramState);
             requestJson.put("lang", "zh_CN");
             log.info("requestJson:{}", requestJson);
