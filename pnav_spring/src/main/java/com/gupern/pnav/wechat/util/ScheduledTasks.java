@@ -91,10 +91,6 @@ public class ScheduledTasks {
         // 循环遍历，为所有订阅者进行推送
         for (JSONObject item : allFromUserName) {
             String openid = item.getString("from_user_name");
-            // 如果是访客的openid，则不推送
-            if (openid.equals("vistor")) {
-                continue;
-            }
             String templateId = item.getString("template_id");
 
             List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);

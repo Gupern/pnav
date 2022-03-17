@@ -235,10 +235,6 @@ public class WechatServiceImpl implements WechatService {
         String openid = dto.getString("openid");
         String taskId = dto.getString("taskId");
 
-        // 如果没有openid，则设置为vistor
-        if (openid == null || openid.equals("")) {
-            openid = "vistor";
-        }
         List<JSONObject> allTasksList;
         if (taskId == null || taskId.equals("")) {
             log.info("findAllTasksByOpenid");
