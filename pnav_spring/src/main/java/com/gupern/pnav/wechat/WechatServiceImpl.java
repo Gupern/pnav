@@ -6,10 +6,7 @@ import com.gupern.pnav.common.bean.Constant;
 import com.gupern.pnav.common.bean.ResponseEnum;
 import com.gupern.pnav.common.bean.ResultMsg;
 import com.gupern.pnav.common.util.CryptoUtil;
-import com.gupern.pnav.wechat.bean.DaoSubscribeMsg;
-import com.gupern.pnav.wechat.bean.DaoTaskInfo;
-import com.gupern.pnav.wechat.bean.RepositorySubscribeMsg;
-import com.gupern.pnav.wechat.bean.RepositoryTaskInfoMsg;
+import com.gupern.pnav.wechat.bean.*;
 import com.gupern.pnav.wechat.util.WechatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +44,9 @@ public class WechatServiceImpl implements WechatService {
     private RepositorySubscribeMsg repositorySubscribeMsg;
     @Autowired
     private RepositoryTaskInfoMsg repositoryTaskInfoMsg;
+
+    @Autowired
+    private RepositoryFundRecord repositoryFundRecord;
 
     public Object sayHelloWorld() {
         return "hello world";
@@ -298,6 +298,45 @@ public class WechatServiceImpl implements WechatService {
         JSONObject returnObj = getRandomTask(allTasksList);
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
+    /*
+     * @author: Gupern
+     * @date: 2022/3/15 20:22
+     * @description: 新增基金操作记录
+     */
+    public Object updateFundRecord(JSONObject dto) {
+        // 计算份额 基金是截取法，同花顺小数点两位后面的数字直接截取
+        double shares = Math.floor(dto.getFloatValue("amount")/ dto.getFloatValue("net_value")*100)/100.0;
+        dto.put("shares", shares);
+
+        JSONObject returnObj = new JSONObject();
+        repositoryFundRecord.save(JSONObject.toJavaObject(dto, DaoFundRecord.class));
+        returnObj.put("msg", "success");
+        returnObj.put("code", "200");
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
+    /*
+     * @author: Gupern
+     * @date: 2022/3/15 20:22
+     * @description: 删除基金操作记录
+     */
+    public Object deleteFundRecord(JSONObject dto) {
+        int id = dto.getIntValue("id");
+        String openid = dto.getString("openid");
+        repositoryFundRecord.deleteFundRecordLogically(id, openid);
+        JSONObject returnObj = new JSONObject();
+        returnObj.put("msg", "success");
+        returnObj.put("code", "200");
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
+    /*
+     * @author: Gupern
+     * @date: 2022/3/15 20:22
+     * @description: 查询基金信息接口文档
+     */
+    public Object queryFundInfo(JSONObject dto) {
+        JSONObject returnObj = null;
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
 //  新建接口时的template
 //    /*
 //     * @author: Gupern
@@ -305,6 +344,9 @@ public class WechatServiceImpl implements WechatService {
 //     * @description:
 //     */
 //    public Object getPersonalProjectInfo(JSONObject dto) {
+//        JSONObject returnObj = new JSONObject();
+//        returnObj.put("msg", "success");
+//        returnObj.put("code", "200");
 //        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
 //    }
 }

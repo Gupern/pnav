@@ -18,7 +18,6 @@ import java.sql.Date;
 @Table(name = "subscribe_msg") // 指定表名
 public class DaoSubscribeMsg {
     @Id // 表示这是primary key
-//    @GeneratedValue(strategy = GenerationType.AUTO) // 表示自增
     // 数据库中已经设置为自增，所以要用IDENTITY
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;

@@ -75,4 +75,20 @@ public class WechatController {
     public Object updatePersonalProjectInfo(@RequestBody JSONObject dto) {
         return service.updatePersonalProjectInfo(dto);
     }
+
+    @RequestMapping(value = "/miniprogram/updateFundRecord", method = POST)
+    @ResponseBody
+    public Object updateFundRecord(@RequestBody JSONObject dto) {
+        return service.updateFundRecord(dto);
+    }
+    @RequestMapping(value = "/miniprogram/deleteFundRecord", method = POST)
+    @ResponseBody
+    public Object deleteFundRecord(@RequestBody JSONObject dto) {
+        return service.deleteFundRecord(dto);
+    }
+    @RequestMapping(value = "/miniprogram/queryFundInfo", method = POST)
+    @ResponseBody
+    public Object queryFundInfo(@RequestBody JSONObject dto) {
+        return service.queryFundInfo(dto);
+    }
 }

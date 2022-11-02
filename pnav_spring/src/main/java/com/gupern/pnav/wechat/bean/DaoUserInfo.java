@@ -17,7 +17,6 @@ import java.sql.Date;
 @Table(name = "user_info")
 public class DaoUserInfo {
     @Id // 表示这是primary key
-//    @GeneratedValue(strategy = GenerationType.AUTO) // 表示自增
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String openid;
