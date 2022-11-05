@@ -300,7 +300,7 @@ public class WechatServiceImpl implements WechatService {
     }
     /*
      * @author: Gupern
-     * @date: 2022/3/15 20:22
+     * @date: 2022/11/3 20:22
      * @description: 新增基金操作记录
      */
     public Object updateFundRecord(JSONObject dto) {
@@ -334,6 +334,13 @@ public class WechatServiceImpl implements WechatService {
      * @description: 查询基金信息接口文档
      */
     public Object queryFundInfo(JSONObject dto) {
+        // 筛选出所有status=0的有效基金买卖记录
+        // 通过时间排序，获取两个列表
+        // 列表1：买入记录 （金额，单位净值，份额）
+        // 列表2：卖出记录 （金额，单位净值，份额）
+        // 剩余总份额 = 买入总份额 - 卖出总份额
+        // 剩余可用份额 = 7天前买入的总份额 - 已卖出总份额
+        // 列表3：剩余可用且净值低于dto.netValueToday的份额 =
         JSONObject returnObj = null;
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
