@@ -283,6 +283,9 @@ public class WechatServiceImpl implements WechatService {
         List<JSONObject> tmpList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid, taskId);
         JSONObject daoTaskInfo = tmpList.get(0);
         daoTaskInfo.put("count", daoTaskInfo.getLongValue("count") + 1);
+        daoTaskInfo.remove("created_time");
+        daoTaskInfo.remove("updated_time");
+        log.info(daoTaskInfo.toString());
         repositoryTaskInfoMsg.save(JSONObject.toJavaObject(daoTaskInfo, DaoTaskInfo.class));
 
         List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);

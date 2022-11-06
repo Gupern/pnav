@@ -39,11 +39,9 @@ public class DaoFundRecord {
     private Date operationTime;
     // 增加此注解，否则会为null
     @CreationTimestamp
-    @JsonFormat(locale = "zh", pattern = "yyyy-MM-dd", timezone = "GMT+8")
     @Column(name = "created_time")
     private Date createdTime;
     @UpdateTimestamp
-    @JsonFormat(locale = "zh", pattern = "yyyy-MM-dd", timezone = "GMT+8")
     @Column(name = "updated_time")
     private Date updatedTime;
 }
