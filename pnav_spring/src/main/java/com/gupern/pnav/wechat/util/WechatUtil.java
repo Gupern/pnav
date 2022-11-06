@@ -104,6 +104,7 @@ public class WechatUtil {
         String url = String.format("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", appId, appSecret, code);
         log.info("url:{}", url);
         JSONObject resJson = restTemplate.getForObject(url, JSONObject.class);
+        resJson.put("session_key", null); //将session_key隐藏
         log.info("resJson:{}", resJson);
         return resJson;
     }
