@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 /**
  * @author: Gupern
@@ -14,4 +15,6 @@ import javax.transaction.Transactional;
  * CRUD refers Create, Read, Update, Delete
  */
 public interface RepositoryOperationProfit extends CrudRepository<DaoOperationProfit, Integer> {
+    @Query(value = "select * from operation_profit where openid = ?1", nativeQuery = true)
+    List<DaoOperationProfit> findAllByOpenid(String openid);
 }

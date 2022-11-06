@@ -91,4 +91,25 @@ public class WechatController {
     public Object queryFundInfo(@RequestBody JSONObject dto) {
         return service.queryFundInfo(dto);
     }
+
+    @RequestMapping(value = "/miniprogram/updateOperationProfit", method = POST)
+    @ResponseBody
+    public Object updateOperationProfit(@RequestBody JSONObject dto) {
+        return service.updateOperationProfit(dto);
+    }
+    @RequestMapping(value = "/miniprogram/deleteOperationProfit", method = POST)
+    @ResponseBody
+    public Object deleteOperationProfit(@RequestBody JSONObject dto) {
+        return service.deleteOperationProfit(dto);
+    }
+    @RequestMapping(value = "/miniprogram/updateSharesRunning", method = POST)
+    @ResponseBody
+    public Object updateSharesRunning(@RequestBody JSONObject dto) {
+        return service.updateSharesRunning(dto);
+    }
+    @RequestMapping(value = "/miniprogram/deleteSharesRunning", method = POST)
+    @ResponseBody
+    public Object deleteSharesRunning(@RequestBody JSONObject dto) {
+        return service.deleteSharesRunning(dto);
+    }
 }

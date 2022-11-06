@@ -1,6 +1,9 @@
 package com.gupern.pnav.wechat.bean;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
 
 /**
  * @author: Gupern
@@ -10,4 +13,6 @@ import org.springframework.data.repository.CrudRepository;
  * CRUD refers Create, Read, Update, Delete
  */
 public interface RepositorySharesRunning extends CrudRepository<DaoSharesRunning, Integer> {
+    @Query(value = "select * from shares_running where openid = ?1", nativeQuery = true)
+    List<DaoSharesRunning> findAllByOpenid(String openid);
 }

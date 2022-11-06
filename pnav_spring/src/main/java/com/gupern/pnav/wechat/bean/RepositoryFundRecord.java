@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 /**
  * @author: Gupern
@@ -17,5 +18,8 @@ public interface RepositoryFundRecord extends CrudRepository<DaoFundRecord, Inte
     @Transactional
     @Modifying
     @Query(value = "update fund_record set status = 1 where id = ?1 and openid = ?2", nativeQuery = true)
-    int deleteFundRecordLogically(int id, String openid);
+    int deleteLogically(int id, String openid);
+
+    @Query(value = "select * from fund_record where openid = ?1", nativeQuery = true)
+    List<DaoFundRecord> findAllByOpenid(String openid);
 }

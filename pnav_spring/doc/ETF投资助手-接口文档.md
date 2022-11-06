@@ -56,19 +56,20 @@ openid，会根据sessionKey进行权限判断
   "code": "200",
   "msg": "请求处理成功",
   "data":{
-    "etfChange": "创业板涨跌幅",
-    "todayFUNVPredict": "今日基金单位净值预计",
-    "positionShares": "持仓份额",
-    "positionAmount": "持仓金额",
-    "earning": "已获利金额，不算浮亏",
-    "earningRatio": "已获利百分比，不算浮亏",
-    "operationRecord": {
-      "date": "操作时间",
-      "amount": "金额",
-      "shares": "份数",
-      "unv": "单位净值",
-      "status": "状态：0-红色，卖出需手续费；1-黄色，卖出不需手续费但不盈利；2-绿色，持有超过7天可盈利；3-灰色，已套利卖出"
-    }
+    "shares": "持仓份额",
+    "zeroShares": "零成本份额",
+    "amount": "持仓金额",
+    "profit": "已获利金额，不算浮亏",
+    "fundRecordList": [{
+      "id": 1,
+      "date": "2022-11-06",
+      "amount": 100,
+      "unv": 0.8878,
+      "shares": 22.21,
+      "operation": 0
+    }],
+    "operationProfitList": [{}],
+    "sharesRunningList": [{}]
   }
 }
 ```
