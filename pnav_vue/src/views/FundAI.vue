@@ -155,6 +155,7 @@ import * as globalConstant from '../const/globalConstant.js';
 export default {
   data() {
     return {
+      BASE_API: process.env.VUE_APP_BASE_TARGET,
       minDate: new Date(2010, 0, 1),
       showModal: false,
       token: '',
@@ -191,7 +192,7 @@ export default {
           token: this.token,
         },
       };
-      this.$http.post(globalConstant.queryFundInfoUrl, data, headers).then(
+      this.$http.post(this.BASE_API + globalConstant.queryFundInfoUrl, data, headers).then(
         response => {
           console.log(response);
           let data = response.data.data;
@@ -256,7 +257,7 @@ export default {
           token: this.token,
         },
       };
-      this.$http.post(globalConstant.modifyFundDateUrl, data, headers).then(
+      this.$http.post(this.BASE_API + globalConstant.modifyFundDateUrl, data, headers).then(
         response => {
           console.log(response);
           if (response.body.code !== '200') {
@@ -289,7 +290,7 @@ export default {
           token: this.token,
         },
       };
-      this.$http.post(globalConstant.modifyFundRecordUrl, data, headers).then(
+      this.$http.post(this.BASE_API + globalConstant.modifyFundRecordUrl, data, headers).then(
         response => {
           console.log(response);
           if (response.body.code !== '200') {
@@ -324,7 +325,7 @@ export default {
           token: this.token,
         },
       };
-      this.$http.post(globalConstant.updateFundRecordUrl, data, headers).then(
+      this.$http.post(this.BASE_API + globalConstant.updateFundRecordUrl, data, headers).then(
         response => {
           console.log(response);
           if (response.body.code !== '200') {
@@ -359,7 +360,7 @@ export default {
           token: this.token,
         },
       };
-      this.$http.post(globalConstant.updateFundRecordUrl, data, headers).then(
+      this.$http.post(this.BASE_API + globalConstant.updateFundRecordUrl, data, headers).then(
         response => {
           console.log(response);
           if (response.body.code !== '200') {

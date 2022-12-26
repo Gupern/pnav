@@ -43,12 +43,18 @@ public class H5ServiceImpl implements H5Service {
         newFundRecord.setOperation(operation);
         // 0是买入，则计算份额
         if (operation == 0) {
-            // 计算份额 基金是截取法，同花顺小数点两位后面的数字直接截取
-            double shares = Math.floor(dto.getFloatValue("amount") / dto.getFloatValue("unv") * 100) / 100.0;
+            // 1．基金单位净值以人民币元为单位，四舍五入，保留小数点后位数由基金管理人确定；
+            //
+            //2．申购费用以人民币元为单位，四舍五入，保留小数点后位数由基金管理人确定；
+            //
+            //3．申购份数四舍五入取整数，保留位数由基金管理人确定，由此产生的误差计入基金资产；
+            //
+            //4．申购费率，由基金管理人定。
+            double shares = Math.round(dto.getFloatValue("amount") / dto.getFloatValue("unv") * 100) / 100.0;
             newFundRecord.setShares((float) shares);
             newFundRecord.setAmount(dto.getFloatValue("amount"));
         } else if (operation == 1){ // 1是卖出，则计算金额
-            double amount = Math.floor(dto.getFloatValue("shares") * dto.getFloatValue("unv")*100) / 100.0;
+            double amount = Math.round(dto.getFloatValue("shares") * dto.getFloatValue("unv")*100) / 100.0;
             newFundRecord.setAmount((float) amount);
             newFundRecord.setShares(dto.getFloatValue("shares"));
         }
@@ -87,7 +93,8 @@ public class H5ServiceImpl implements H5Service {
             // 获取unv - 通过份额运营表找到该unv
             newOperationProfit.setUnv(newSharesRunning.getUnv());
             newOperationProfit.setFundRecordId(resSaveFundRecord.getId());
-            double profit = Math.floor((newOperationProfit.getUnvSold() - newOperationProfit.getUnv()) * newFundRecord.getShares() * 100) / 100.0;
+            double profit =
+                    Math.round((newOperationProfit.getUnvSold() - newOperationProfit.getUnv()) * newFundRecord.getShares() * 100) / 100.0;
             newOperationProfit.setProfit((float) profit);
             repositoryOperationProfit.save(newOperationProfit);
         }
@@ -193,7 +200,7 @@ public class H5ServiceImpl implements H5Service {
         operationProfit.setUnvSold(dto.getFloatValue("unv"));
         // 更新盈利
         double profit =
-                Math.floor((operationProfit.getUnvSold() - operationProfit.getUnv()) * operationProfit.getShares() * 100) / 100.0;
+                Math.round((operationProfit.getUnvSold() - operationProfit.getUnv()) * operationProfit.getShares() * 100) / 100.0;
         operationProfit.setProfit((float) profit);
         repositoryOperationProfit.save(operationProfit);
 
@@ -203,7 +210,7 @@ public class H5ServiceImpl implements H5Service {
         // 更新卖出净值
         fundRecord.setUnv(operationProfit.getUnvSold());
         // 更新卖出金额
-        double amount = Math.floor(fundRecord.getShares()* fundRecord.getUnv()*100) / 100.0;
+        double amount = Math.round(fundRecord.getShares()* fundRecord.getUnv()*100) / 100.0;
         fundRecord.setAmount((float) amount);
         repositoryFundRecord.save(fundRecord);
 
