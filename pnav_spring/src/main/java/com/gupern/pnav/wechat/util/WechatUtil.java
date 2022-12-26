@@ -3,12 +3,12 @@ package com.gupern.pnav.wechat.util;
 import com.alibaba.fastjson.JSONObject;
 import com.gupern.pnav.common.util.*;
 import com.gupern.pnav.wechat.bean.RepositoryTaskInfoMsg;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.web.client.RestTemplate;
+import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -111,7 +111,6 @@ public class WechatUtil {
 
     // 以下内容引用微信官方加解密包，主要为了改写解密时兼容json格式
     Charset CHARSET = StandardCharsets.UTF_8;
-    Base64 base64 = new Base64();
     byte[] aesKey;
     String token;
     String appId;
@@ -131,7 +130,7 @@ public class WechatUtil {
 
         this.token = token;
         this.appId = appId;
-        aesKey = Base64.decodeBase64(encodingAesKey + "=");
+        aesKey = Base64.getDecoder().decode(encodingAesKey + "=");
     }
 
     // 随机生成16位字符串
@@ -184,7 +183,7 @@ public class WechatUtil {
             byte[] encrypted = cipher.doFinal(unencrypted);
 
             // 使用BASE64对加密后的字符串进行编码
-            String base64Encrypted = base64.encodeToString(encrypted);
+            String base64Encrypted = Base64.getEncoder().encodeToString(encrypted);
 
             return base64Encrypted;
         } catch (Exception e) {
@@ -210,7 +209,7 @@ public class WechatUtil {
             cipher.init(Cipher.DECRYPT_MODE, key_spec, iv);
 
             // 使用BASE64对密文进行解码
-            byte[] encrypted = Base64.decodeBase64(text);
+            byte[] encrypted = Base64.getDecoder().decode(text);
 
             // 解密
             original = cipher.doFinal(encrypted);

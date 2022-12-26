@@ -1,4 +1,4 @@
-package com.gupern.pnav.wechat.bean;
+package com.gupern.pnav.h5.bean;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +22,10 @@ public interface RepositoryFundRecord extends CrudRepository<DaoFundRecord, Inte
 
     @Query(value = "select * from fund_record where openid = ?1", nativeQuery = true)
     List<DaoFundRecord> findAllByOpenid(String openid);
+
+    @Query(value = "select * from fund_record where user_id = ?1", nativeQuery = true)
+    List<DaoFundRecord> findAllByUserId(String userId);
+
+    @Query(value = "select * from fund_record where id = ?1", nativeQuery = true)
+   DaoFundRecord findById(int fundRecordId);
 }

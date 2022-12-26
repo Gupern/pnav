@@ -20,12 +20,6 @@ public class WechatController {
         this.service = service;
     }
 
-    @RequestMapping(value = "/hello", method = GET)
-    @ResponseBody
-    public Object sayHelloWorld() {
-        return service.sayHelloWorld();
-    }
-
     @RequestMapping(value = "/miniprogram/push", method = {GET, POST})
     @ResponseBody // 兼容post方式和get方式
     public Object miniprogramPush(HttpServletRequest httpServletRequest, @RequestBody(required = false) JSONObject dto) {
@@ -76,40 +70,4 @@ public class WechatController {
         return service.updatePersonalProjectInfo(dto);
     }
 
-    @RequestMapping(value = "/miniprogram/updateFundRecord", method = POST)
-    @ResponseBody
-    public Object updateFundRecord(@RequestBody JSONObject dto) {
-        return service.updateFundRecord(dto);
-    }
-    @RequestMapping(value = "/miniprogram/deleteFundRecord", method = POST)
-    @ResponseBody
-    public Object deleteFundRecord(@RequestBody JSONObject dto) {
-        return service.deleteFundRecord(dto);
-    }
-    @RequestMapping(value = "/miniprogram/queryFundInfo", method = POST)
-    @ResponseBody
-    public Object queryFundInfo(@RequestBody JSONObject dto) {
-        return service.queryFundInfo(dto);
-    }
-
-    @RequestMapping(value = "/miniprogram/updateOperationProfit", method = POST)
-    @ResponseBody
-    public Object updateOperationProfit(@RequestBody JSONObject dto) {
-        return service.updateOperationProfit(dto);
-    }
-    @RequestMapping(value = "/miniprogram/deleteOperationProfit", method = POST)
-    @ResponseBody
-    public Object deleteOperationProfit(@RequestBody JSONObject dto) {
-        return service.deleteOperationProfit(dto);
-    }
-    @RequestMapping(value = "/miniprogram/updateSharesRunning", method = POST)
-    @ResponseBody
-    public Object updateSharesRunning(@RequestBody JSONObject dto) {
-        return service.updateSharesRunning(dto);
-    }
-    @RequestMapping(value = "/miniprogram/deleteSharesRunning", method = POST)
-    @ResponseBody
-    public Object deleteSharesRunning(@RequestBody JSONObject dto) {
-        return service.deleteSharesRunning(dto);
-    }
 }

@@ -1,6 +1,6 @@
 package com.gupern.pnav.common.util;
 
-import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -40,5 +40,12 @@ public class RequestUtil {
             mediaTypes.add(MediaType.TEXT_PLAIN);
             setSupportedMediaTypes(mediaTypes);// tag6
         }
+    }
+
+    public static HttpHeaders getHeader() {
+        //设置header信息
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.APPLICATION_JSON);
+        return requestHeaders;
     }
 }

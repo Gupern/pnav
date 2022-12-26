@@ -43,6 +43,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResultMsg exceptionHandler(HttpServletRequest req, NullPointerException e){
         log.error("发生空指针异常！原因是:{}", e.getMessage());
+        e.printStackTrace();
         return ResultMsg.fail(ResponseEnum.BODY_NOT_MATCH);
     }
 

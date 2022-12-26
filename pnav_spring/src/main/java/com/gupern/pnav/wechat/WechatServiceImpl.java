@@ -45,14 +45,6 @@ public class WechatServiceImpl implements WechatService {
     @Autowired
     private RepositoryTaskInfoMsg repositoryTaskInfoMsg;
 
-    @Autowired
-    private RepositoryFundRecord repositoryFundRecord;
-
-    @Autowired
-    private RepositoryOperationProfit repositoryOperationProfit;
-
-    @Autowired
-    private RepositorySharesRunning repositorySharesRunning;
 
     public Object sayHelloWorld() {
         return "hello world";
@@ -93,6 +85,12 @@ public class WechatServiceImpl implements WechatService {
      * @author: Gupern
      * @date: 2022/3/5 18:41
      * @description: 微信小程序推送消息
+             接入验证时：若确认此次 GET 请求来自微信服务器，请原样返回 echostr 参数内容，则接入生效，成为开发者成功，否则接入失败。
+             return echostr;
+             接入成功后，服务器收到请求必须做出下述回复，这样微信服务器才不会对此作任何处理，并且不会发起重试，否则，将出现严重的错误提示。详见下面说明：
+             1. 直接回复success（推荐方式）
+             2. 直接回复空串（指字节长度为0的空字符串，而不是结构体中content字段的内容为空）
+             3. 若接口文档有指定返回内容，应按文档说明返回
      */
     public Object miniprogramPush(HttpServletRequest request, JSONObject dto) {
         try {
@@ -102,6 +100,9 @@ public class WechatServiceImpl implements WechatService {
             String signature = request.getParameter("signature");
             String msgSignature = request.getParameter("msg_signature");
             log.info("nonce:{}, timestamp:{}, signature:{}, encodingAesKey:{}, msg_signature:{}", nonce, timestamp, signature, encodingAesKey, msgSignature);
+            if (dto == null) {
+                return echostr;
+            }
             // 解密
             WechatUtil wechatUtil = new WechatUtil(token, encodingAesKey, appId);
             JSONObject planeJson = JSONObject.parseObject(wechatUtil.decryptMsg(msgSignature, timestamp, nonce, dto));
@@ -130,14 +131,6 @@ public class WechatServiceImpl implements WechatService {
                     repositorySubscribeMsg.save(subscribeMsg);
                 }
             }
-            /*
-             接入验证时：若确认此次 GET 请求来自微信服务器，请原样返回 echostr 参数内容，则接入生效，成为开发者成功，否则接入失败。
-             return echostr;
-             接入成功后，服务器收到请求必须做出下述回复，这样微信服务器才不会对此作任何处理，并且不会发起重试，否则，将出现严重的错误提示。详见下面说明：
-             1. 直接回复success（推荐方式）
-             2. 直接回复空串（指字节长度为0的空字符串，而不是结构体中content字段的内容为空）
-             3. 若接口文档有指定返回内容，应按文档说明返回
-             */
             return "success";
         } catch (Exception e) {
             e.printStackTrace();
@@ -307,165 +300,6 @@ public class WechatServiceImpl implements WechatService {
         repositoryTaskInfoMsg.save(JSONObject.toJavaObject(daoTaskInfo, DaoTaskInfo.class));
         List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
         JSONObject returnObj = getRandomTask(allTasksList);
-        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
-    }
-
-    /*
-     * @author: Gupern
-     * @date: 2022/11/3 20:22
-     * @description: 新增基金操作记录
-     */
-    public Object updateFundRecord(JSONObject dto) {
-        // 获取操作
-        int operation = dto.getIntValue("operation");
-        // 如果是买入，则计算份额
-        if (operation == 0) {
-            // 计算份额 基金是截取法，同花顺小数点两位后面的数字直接截取
-            double shares = Math.floor(dto.getFloatValue("amount") / dto.getFloatValue("unv") * 100) / 100.0;
-            dto.put("shares", shares);
-        } else { // 如果是卖出，则计算金额
-            double amount = Math.floor(dto.getFloatValue("shares") * dto.getFloatValue("unv")*100) / 100.0;
-            dto.put("amount", amount);
-        }
-        log.info(dto.toString());
-
-        JSONObject returnObj = new JSONObject();
-        repositoryFundRecord.save(JSONObject.toJavaObject(dto, DaoFundRecord.class));
-        returnObj.put("msg", "success");
-        returnObj.put("code", "200");
-        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
-    }
-
-    /*
-     * @author: Gupern
-     * @date: 2022/3/15 20:22
-     * @description: 删除基金操作记录
-     */
-    public Object deleteFundRecord(JSONObject dto) {
-        int id = dto.getIntValue("id");
-        String openid = dto.getString("openid");
-        log.info("id:{}, openid:{}", id, openid);
-        repositoryFundRecord.deleteLogically(id, openid);
-        JSONObject returnObj = new JSONObject();
-        returnObj.put("msg", "success");
-        returnObj.put("code", "200");
-        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
-    }
-
-    /*
-     * @author: Gupern
-     * @date: 2022/3/15 20:22
-     * @description: 查询基金信息接口文档
-     */
-    public Object queryFundInfo(JSONObject dto) {
-        String openid = dto.getString("openid");
-        // 筛选出所有status=0的有效基金买卖记录
-        // 获取基金记录表所有数据 TODO 增加openid
-        List<DaoFundRecord> fundRecordList = repositoryFundRecord.findAllByOpenid(openid);
-        // 获取份额运营表
-        List<DaoOperationProfit> operationProfitList = repositoryOperationProfit.findAllByOpenid(openid);
-        // 获取操作盈亏表
-        List<DaoSharesRunning> sharesRunningList = repositorySharesRunning.findAllByOpenid(openid);
-        log.info("fundRecordList: {}", fundRecordList.toString());
-        log.info("operationProfitList: {}", operationProfitList.toString());
-        log.info("sharesRunningList: {}", sharesRunningList.toString());
-        // 1. 计算出shares 总的持仓份额 = sum(基金记录表买入) - sum(基金记录表卖出)
-        float shares = 0;
-        for (DaoFundRecord item:fundRecordList) {
-            if (item.getStatus()!=0) {
-                continue;
-            }
-            if (item.getOperation()==0) {
-                shares += item.getShares();
-            } else {
-                shares -= item.getShares();
-            }
-        }
-        log.info("shares: {}", shares);
-
-        // 2. 计算出amount 持仓金额 = sum(买入净值 * 剩余份额)
-        float amount = 0;
-        for (DaoSharesRunning item:sharesRunningList) {
-            amount += item.getUnv() * item.getSharesRemaining();
-        }
-        log.info("amount: {}", amount);
-
-        // 3. 计算出profit 已获利
-        float profit = 0;
-        for (DaoOperationProfit item:operationProfitList) {
-            profit += item.getProfit();
-        }
-        log.info("profit: {}", profit);
-
-
-        // 4. TODO 计算出零成本份额
-        float zeroShares = 0;
-        // 5. TODO 计算出估值
-        // 6. TODO 计算出推荐
-
-        JSONObject returnObj = new JSONObject();
-        returnObj.put("shares", shares);
-        returnObj.put("amount", amount);
-        returnObj.put("profit", profit);
-        returnObj.put("zeroShares", zeroShares);
-        returnObj.put("fundRecordList", fundRecordList);
-        returnObj.put("operationProfitList", operationProfitList);
-        returnObj.put("sharesRunningList", sharesRunningList);
-
-        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
-    }
-    /*
-     * @author: Gupern
-     * @date: 2022/11/6 16:00
-     * @description:
-     */
-    public Object updateOperationProfit(JSONObject dto) {
-        log.info(dto.toString());
-        repositoryOperationProfit.save(JSONObject.toJavaObject(dto, DaoOperationProfit.class));
-        JSONObject returnObj = new JSONObject();
-        returnObj.put("msg", "success");
-        returnObj.put("code", "200");
-        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
-    }
-    /*
-     * @author: Gupern
-     * @date: 2022/11/6 16:00
-     * @description:
-     */
-    public Object deleteOperationProfit(JSONObject dto) {
-        int id = dto.getIntValue("id");
-        log.info("id:{}", id);
-        repositoryOperationProfit.deleteById(id);
-        JSONObject returnObj = new JSONObject();
-        returnObj.put("msg", "success");
-        returnObj.put("code", "200");
-        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
-    }
-    /*
-     * @author: Gupern
-     * @date: 2022/11/6 16:00
-     * @description:
-     */
-    public Object updateSharesRunning(JSONObject dto) {
-        log.info(dto.toString());
-        repositorySharesRunning.save(JSONObject.toJavaObject(dto, DaoSharesRunning.class));
-        JSONObject returnObj = new JSONObject();
-        returnObj.put("msg", "success");
-        returnObj.put("code", "200");
-        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
-    }
-    /*
-     * @author: Gupern
-     * @date: 2022/11/6 16:00
-     * @description:
-     */
-    public Object deleteSharesRunning(JSONObject dto) {
-        int id = dto.getIntValue("id");
-        log.info("id:{}", id);
-        repositorySharesRunning.deleteById(id);
-        JSONObject returnObj = new JSONObject();
-        returnObj.put("msg", "success");
-        returnObj.put("code", "200");
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
 //  新建接口时的template
