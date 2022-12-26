@@ -66,7 +66,7 @@ PNAV后台代码仓库，使用spring cloud框架
 
 #### db信息
 
-db名: pnav
+db名: pnavdb
 
 ## 命令
 

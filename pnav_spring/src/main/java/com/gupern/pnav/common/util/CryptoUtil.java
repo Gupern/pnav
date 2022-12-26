@@ -1,11 +1,5 @@
 package com.gupern.pnav.common.util;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Base64;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +9,15 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * @author: Gupern
@@ -35,9 +34,14 @@ public class CryptoUtil {
     public static final String HmacSHA1 = "HmacSHA1";
     public static final String DES = "DES";
     public static final String AES = "AES";
+
+    public static final String AES_NO_PADDING = "AES/CBC/NoPadding";
     // 以下内容引用微信官方加解密包，主要为了改写解密时兼容json格式
     public static final Charset CHARSET = StandardCharsets.UTF_8;
-    public static final org.apache.commons.codec.binary.Base64 base64 = new org.apache.commons.codec.binary.Base64();
+    // AES加解密Code Type
+    public static final String CODE_TYPE = "UTF-8";
+    // AES加解密AES Type
+    public static final String AES_TYPE = "AES";
 
     /**
      * 编码格式，如null 或者 uft-8
@@ -53,6 +57,14 @@ public class CryptoUtil {
     public int keysizeAES = 128;
 
     public static CryptoUtil me;
+
+    /***
+     * key和iv值可以随机生成 前端登录加解密用
+     */
+    private static String KEY = "1234567890123456";
+
+    private static String IV = "1234567890123456";
+
 
     private CryptoUtil(String charSet) {
         //单例
@@ -372,100 +384,6 @@ public class CryptoUtil {
     }
 
 
-    /**
-     * 对明文进行加密.
-     *
-     * @param text   需要加密的明文
-     * @param aesKey
-     * @return 加密后base64编码的字符串
-     * @throws AesException aes加密失败
-     */
-    public String aesEncrypt(String randomStr, String text, byte[] aesKey) throws AesException {
-        ByteGroup byteCollector = new ByteGroup();
-        byte[] randomStrBytes = randomStr.getBytes(CHARSET);
-        byte[] textBytes = text.getBytes(CHARSET);
-        byte[] networkBytesOrder = getNetworkBytesOrder(textBytes.length);
-
-        // randomStr + networkBytesOrder + text + appid
-        byteCollector.addBytes(randomStrBytes);
-        byteCollector.addBytes(networkBytesOrder);
-        byteCollector.addBytes(textBytes);
-
-        // ... + pad: 使用自定义的填充方式对明文进行补位填充
-        byte[] padBytes = PKCS7Encoder.encode(byteCollector.size());
-        byteCollector.addBytes(padBytes);
-
-        // 获得最终的字节流, 未加密
-        byte[] unencrypted = byteCollector.toBytes();
-
-        try {
-            // 设置加密模式为AES的CBC模式
-            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
-            SecretKeySpec keySpec = new SecretKeySpec(aesKey, "AES");
-            IvParameterSpec iv = new IvParameterSpec(aesKey, 0, 16);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, iv);
-
-            // 加密
-            byte[] encrypted = cipher.doFinal(unencrypted);
-
-            // 使用BASE64对加密后的字符串进行编码
-            String base64Encrypted = base64.encodeToString(encrypted);
-
-            return base64Encrypted;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new AesException(AesException.EncryptAESError);
-        }
-    }
-
-    /**
-     * 对密文进行解密.
-     *
-     * @param text   需要解密的密文
-     * @param aesKey
-     * @return 解密得到的明文
-     * @throws AesException aes解密失败
-     */
-    public String aesDecrypt(String text, byte[] aesKey) throws AesException {
-        byte[] original;
-        try {
-            // 设置解密模式为AES的CBC模式
-            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
-            SecretKeySpec key_spec = new SecretKeySpec(aesKey, "AES");
-            IvParameterSpec iv = new IvParameterSpec(Arrays.copyOfRange(aesKey, 0, 16));
-            cipher.init(Cipher.DECRYPT_MODE, key_spec, iv);
-
-            // 使用BASE64对密文进行解码
-            byte[] encrypted = org.apache.commons.codec.binary.Base64.decodeBase64(text);
-
-            // 解密
-            original = cipher.doFinal(encrypted);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new AesException(AesException.DecryptAESError);
-        }
-
-        String xmlContent, from_appid;
-        try {
-            // 去除补位字符
-            byte[] bytes = PKCS7Encoder.decode(original);
-
-            // 分离16位随机字符串,网络字节序和AppId
-            byte[] networkOrder = Arrays.copyOfRange(bytes, 16, 20);
-
-            int xmlLength = recoverNetworkBytesOrder(networkOrder);
-
-            xmlContent = new String(Arrays.copyOfRange(bytes, 20, 20 + xmlLength), CHARSET);
-            from_appid = new String(Arrays.copyOfRange(bytes, 20 + xmlLength, bytes.length),
-                    CHARSET);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new AesException(AesException.IllegalBuffer);
-        }
-
-        return xmlContent;
-
-    }
 
     // 生成4个字节的网络字节序
     public static byte[] getNetworkBytesOrder(int sourceNumber) {
@@ -498,4 +416,156 @@ public class CryptoUtil {
         }
         return sb.toString();
     }
+
+
+    /**
+     * 加密 aes 无iv版本
+     */
+    public static byte[] encryptAes(String cleartext, String AES_KEY) {
+        try {
+            SecretKeySpec sKey = new SecretKeySpec(AES_KEY.getBytes(), "AES");
+            Cipher cipher = Cipher.getInstance(AES_TYPE);
+            cipher.init(Cipher.ENCRYPT_MODE, sKey);
+            return cipher.doFinal(cleartext.getBytes(CODE_TYPE));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 解密 aes 无iv版本
+     */
+    public static String decryptAes(byte[] content, String AES_KEY) {
+        try {
+            Cipher cipher = Cipher.getInstance(AES_TYPE);
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(AES_KEY.getBytes(), "AES"));
+            byte[] decoded = cipher.doFinal(content);
+            return new String(decoded, CODE_TYPE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    /***
+     * aes加密 默认iv和key
+     * @param  data 要加密的数据
+     * @return encrypt
+     */
+    public static String aesEncrypt(String data){
+        return aesEncryptWithIv(data, KEY, IV);
+    }
+
+    /***
+     * aes解密 默认iv和key
+     * param data 需要解密的数据
+     */
+    public static String aesDecrypt(String data){
+        return aesDecryptWithIv(data, KEY, IV);
+    }
+
+    /**
+     * 加密方法
+     * @param data  要加密的数据
+     * @param key 加密key
+     * @param iv 加密iv
+     * @return 加密的结果
+
+     */
+    private static String aesEncryptWithIv(String data, String key, String iv){
+        try {
+            //"算法/模式/补码方式"NoPadding PkcsPadding
+            Cipher cipher = Cipher.getInstance(AES_NO_PADDING);
+            int blockSize = cipher.getBlockSize();
+
+            byte[] dataBytes = data.getBytes();
+            int plaintextLength = dataBytes.length;
+            if (plaintextLength % blockSize != 0) {
+                plaintextLength = plaintextLength + (blockSize - (plaintextLength % blockSize));
+            }
+
+            byte[] plaintext = new byte[plaintextLength];
+            System.arraycopy(dataBytes, 0, plaintext, 0, dataBytes.length);
+
+            SecretKeySpec keyspec = new SecretKeySpec(key.getBytes(), "AES");
+            IvParameterSpec ivspec = new IvParameterSpec(iv.getBytes());
+
+            cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivspec);
+            byte[] encrypted = cipher.doFinal(plaintext);
+
+            return new String(Base64.getEncoder().encode(encrypted));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * aes解密， 有iv版本， 用于前端登录密码解密等
+     * @param data 要解密的数据
+     * @param key  解密key
+     * @param iv 解密iv
+     * @return 解密的结果
+     */
+    private static String aesDecryptWithIv(String data, String key, String iv){
+        try {
+            byte[] encrypted1 = Base64.getDecoder().decode(data);
+            Cipher cipher = Cipher.getInstance(AES_NO_PADDING);
+            SecretKeySpec keySpec = new SecretKeySpec(key.getBytes(), "AES");
+            IvParameterSpec ivSpec = new IvParameterSpec(iv.getBytes());
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+            byte[] original = cipher.doFinal(encrypted1);
+            return new String(original).trim();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
+
+    /**
+     * 加密 用于及未供应商 以及和其他保司
+     */
+    public static String encryptAesAndBase64(String cleartext, String AES_KEY) {
+        try {
+            SecretKeySpec sKey = new SecretKeySpec(AES_KEY.getBytes(), "AES");
+            Cipher cipher = Cipher.getInstance(AES_TYPE);
+            cipher.init(Cipher.ENCRYPT_MODE, sKey);
+            byte[] decrypted = cipher.doFinal(cleartext.getBytes(CODE_TYPE));
+            return Base64.getEncoder().encodeToString(decrypted);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    /**
+     * 解密 用于及未供应商 以及和其他保司
+     */
+    public static String decryptBase64AndAes(String content, String AES_KEY) {
+        try {
+            byte[] sourceBytes = Base64.getDecoder().decode(content);
+            Cipher cipher = Cipher.getInstance(AES_TYPE);
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(AES_KEY.getBytes(), "AES"));
+            byte[] decoded = cipher.doFinal(sourceBytes);
+            return new String(decoded, CODE_TYPE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    /**
+     * 返回uuid，32位，无横杠-
+     * @return String uuid, length=32
+     */
+    public static String getUUID() {
+        String uuid = UUID.randomUUID().toString().replaceAll("-", "");
+        return uuid;
+    }
+
+
 }

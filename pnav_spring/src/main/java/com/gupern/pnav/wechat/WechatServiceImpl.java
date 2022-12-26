@@ -6,10 +6,7 @@ import com.gupern.pnav.common.bean.Constant;
 import com.gupern.pnav.common.bean.ResponseEnum;
 import com.gupern.pnav.common.bean.ResultMsg;
 import com.gupern.pnav.common.util.CryptoUtil;
-import com.gupern.pnav.wechat.bean.DaoSubscribeMsg;
-import com.gupern.pnav.wechat.bean.DaoTaskInfo;
-import com.gupern.pnav.wechat.bean.RepositorySubscribeMsg;
-import com.gupern.pnav.wechat.bean.RepositoryTaskInfoMsg;
+import com.gupern.pnav.wechat.bean.*;
 import com.gupern.pnav.wechat.util.WechatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +44,7 @@ public class WechatServiceImpl implements WechatService {
     private RepositorySubscribeMsg repositorySubscribeMsg;
     @Autowired
     private RepositoryTaskInfoMsg repositoryTaskInfoMsg;
+
 
     public Object sayHelloWorld() {
         return "hello world";
@@ -87,6 +85,12 @@ public class WechatServiceImpl implements WechatService {
      * @author: Gupern
      * @date: 2022/3/5 18:41
      * @description: 微信小程序推送消息
+             接入验证时：若确认此次 GET 请求来自微信服务器，请原样返回 echostr 参数内容，则接入生效，成为开发者成功，否则接入失败。
+             return echostr;
+             接入成功后，服务器收到请求必须做出下述回复，这样微信服务器才不会对此作任何处理，并且不会发起重试，否则，将出现严重的错误提示。详见下面说明：
+             1. 直接回复success（推荐方式）
+             2. 直接回复空串（指字节长度为0的空字符串，而不是结构体中content字段的内容为空）
+             3. 若接口文档有指定返回内容，应按文档说明返回
      */
     public Object miniprogramPush(HttpServletRequest request, JSONObject dto) {
         try {
@@ -96,6 +100,9 @@ public class WechatServiceImpl implements WechatService {
             String signature = request.getParameter("signature");
             String msgSignature = request.getParameter("msg_signature");
             log.info("nonce:{}, timestamp:{}, signature:{}, encodingAesKey:{}, msg_signature:{}", nonce, timestamp, signature, encodingAesKey, msgSignature);
+            if (dto == null) {
+                return echostr;
+            }
             // 解密
             WechatUtil wechatUtil = new WechatUtil(token, encodingAesKey, appId);
             JSONObject planeJson = JSONObject.parseObject(wechatUtil.decryptMsg(msgSignature, timestamp, nonce, dto));
@@ -124,14 +131,6 @@ public class WechatServiceImpl implements WechatService {
                     repositorySubscribeMsg.save(subscribeMsg);
                 }
             }
-            /*
-             接入验证时：若确认此次 GET 请求来自微信服务器，请原样返回 echostr 参数内容，则接入生效，成为开发者成功，否则接入失败。
-             return echostr;
-             接入成功后，服务器收到请求必须做出下述回复，这样微信服务器才不会对此作任何处理，并且不会发起重试，否则，将出现严重的错误提示。详见下面说明：
-             1. 直接回复success（推荐方式）
-             2. 直接回复空串（指字节长度为0的空字符串，而不是结构体中content字段的内容为空）
-             3. 若接口文档有指定返回内容，应按文档说明返回
-             */
             return "success";
         } catch (Exception e) {
             e.printStackTrace();
@@ -180,7 +179,8 @@ public class WechatServiceImpl implements WechatService {
      */
     public Object getPersonalProjectInfo(JSONObject dto) {
 
-        List<JSONObject> allTasksList = getTaskListByOpenidAndTaskId(dto);;
+        List<JSONObject> allTasksList = getTaskListByOpenidAndTaskId(dto);
+        ;
 
         // 建立一个map 与返回的格式不同，便于查找projectName
         JSONObject projectInfoTmp = new JSONObject();
@@ -235,10 +235,6 @@ public class WechatServiceImpl implements WechatService {
         String openid = dto.getString("openid");
         String taskId = dto.getString("taskId");
 
-        // 如果没有openid，则设置为vistor
-        if (openid == null || openid.equals("")) {
-            openid = "vistor";
-        }
         List<JSONObject> allTasksList;
         if (taskId == null || taskId.equals("")) {
             log.info("findAllTasksByOpenid");
@@ -267,6 +263,7 @@ public class WechatServiceImpl implements WechatService {
         repositoryTaskInfoMsg.save(daoTaskInfo);
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, "success");
     }
+
     /*
      * @author: Gupern
      * @date: 2022/3/16 23:11
@@ -276,9 +273,12 @@ public class WechatServiceImpl implements WechatService {
     public Object finishTask(JSONObject dto) {
         String taskId = dto.getString("taskId");
         String openid = dto.getString("openid");
-        List<JSONObject> tmpList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid,taskId);
+        List<JSONObject> tmpList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid, taskId);
         JSONObject daoTaskInfo = tmpList.get(0);
-        daoTaskInfo.put("count", daoTaskInfo.getLongValue("count")+1);
+        daoTaskInfo.put("count", daoTaskInfo.getLongValue("count") + 1);
+        daoTaskInfo.remove("created_time");
+        daoTaskInfo.remove("updated_time");
+        log.info(daoTaskInfo.toString());
         repositoryTaskInfoMsg.save(JSONObject.toJavaObject(daoTaskInfo, DaoTaskInfo.class));
 
         List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
@@ -294,9 +294,9 @@ public class WechatServiceImpl implements WechatService {
     public Object changeTask(JSONObject dto) {
         String taskId = dto.getString("taskId");
         String openid = dto.getString("openid");
-        List<JSONObject> tmpList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid,taskId);
+        List<JSONObject> tmpList = repositoryTaskInfoMsg.findAllTasksByOpenidAndTaskId(openid, taskId);
         JSONObject daoTaskInfo = tmpList.get(0);
-        daoTaskInfo.put("change_count", daoTaskInfo.getLongValue("change_count")+1);
+        daoTaskInfo.put("change_count", daoTaskInfo.getLongValue("change_count") + 1);
         repositoryTaskInfoMsg.save(JSONObject.toJavaObject(daoTaskInfo, DaoTaskInfo.class));
         List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
         JSONObject returnObj = getRandomTask(allTasksList);
@@ -305,10 +305,13 @@ public class WechatServiceImpl implements WechatService {
 //  新建接口时的template
 //    /*
 //     * @author: Gupern
-//     * @date: 2022/3/15 20:22
+//     * @date: 2022/11/6 16:00
 //     * @description:
 //     */
 //    public Object getPersonalProjectInfo(JSONObject dto) {
+//        JSONObject returnObj = new JSONObject();
+//        returnObj.put("msg", "success");
+//        returnObj.put("code", "200");
 //        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
 //    }
 }

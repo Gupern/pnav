@@ -1,5 +1,6 @@
 package com.gupern.pnav.common.bean;
 
+
 import com.gupern.pnav.common.baseInterface.BaseResponseEnum;
 
 /**

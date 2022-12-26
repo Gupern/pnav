@@ -19,12 +19,6 @@ package com.gupern.pnav.wechat.util;
  * limitations under the License.
  */
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-
 import com.alibaba.fastjson.JSONObject;
 import com.gupern.pnav.common.util.CryptoUtil;
 import com.gupern.pnav.wechat.bean.RepositorySubscribeMsg;
@@ -35,6 +29,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 import static com.gupern.pnav.wechat.util.WechatUtil.getMiniProgramAccessToken;
 
@@ -91,17 +90,17 @@ public class ScheduledTasks {
         // 循环遍历，为所有订阅者进行推送
         for (JSONObject item : allFromUserName) {
             String openid = item.getString("from_user_name");
-            // 如果是访客的openid，则不推送
-            if (openid.equals("vistor")) {
-                continue;
-            }
             String templateId = item.getString("template_id");
 
             List<JSONObject> allTasksList = repositoryTaskInfoMsg.findAllTasksByOpenid(openid);
             log.info("openid:{}, allTasksList:{}", openid, allTasksList);
 
-            String thing = WechatUtil.getRandomTask(allTasksList).getString("task");
-            if (thing == null) continue; // 如果没有设置task，则跳过
+            JSONObject taskInfo = WechatUtil.getRandomTask(allTasksList);
+            // 如果用户没设置任务，则跳过
+            if (taskInfo == null) {
+                continue;
+            }
+            String thing = taskInfo.getString("task");
 
             JSONObject tmpThing2 = new JSONObject();
             tmpThing2.put("value", thing);
@@ -119,7 +118,7 @@ public class ScheduledTasks {
             requestJson.put("data", tmpData);
             requestJson.put("touser", openid);
             requestJson.put("template_id", templateId);
-            String page = String.format("pages/index/index?openid=%s&taskId=%s", openid, item.getString("id"));
+            String page = String.format("pages/index/index?openid=%s&taskId=%s", openid, taskInfo.getString("id"));
             requestJson.put("page", page);
             requestJson.put("miniprogram_state", miniprogramState);
             requestJson.put("lang", "zh_CN");

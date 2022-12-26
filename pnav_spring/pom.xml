@@ -73,6 +73,10 @@
             <version>1.2.13</version>
         </dependency>
         <!--分页工具 end-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.swagger</groupId>
@@ -84,7 +88,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.25.sec10</version>
+            <version>2.0.16</version>
         </dependency>
         <!-- 引入本地包 -->
         <dependency>

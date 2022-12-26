@@ -1,60 +1,122 @@
 <template>
-    <table id="table1" border="1" cellspacing="0">
-        <!--cellspacing：边框为0-->
-        <thead>
-            <tr>
-                <td colspan="2" align="center">常用书签</td>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="value in arr" :key="value.num">
-                <td>
-                    {{value.num}}
-                </td>
-                <td>
-                    <a v-bind:href="value.link" target="_blank">
-                        {{value.name}}
-                    </a>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+  <div class="hello">
+    <h1>{{ msg }}</h1>
+    <p>
+      For a guide and recipes on how to configure / customize this project,<br />
+      check out the
+      <a href="https://cli.vuejs.org" target="_blank" rel="noopener"
+        >vue-cli documentation</a
+      >.
+    </p>
+    <h3>Installed CLI Plugins</h3>
+    <ul>
+      <li>
+        <a
+          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel"
+          target="_blank"
+          rel="noopener"
+          >babel</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-router"
+          target="_blank"
+          rel="noopener"
+          >router</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint"
+          target="_blank"
+          rel="noopener"
+          >eslint</a
+        >
+      </li>
+    </ul>
+    <h3>Essential Links</h3>
+    <ul>
+      <li>
+        <a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a>
+      </li>
+      <li>
+        <a href="https://forum.vuejs.org" target="_blank" rel="noopener"
+          >Forum</a
+        >
+      </li>
+      <li>
+        <a href="https://chat.vuejs.org" target="_blank" rel="noopener"
+          >Community Chat</a
+        >
+      </li>
+      <li>
+        <a href="https://twitter.com/vuejs" target="_blank" rel="noopener"
+          >Twitter</a
+        >
+      </li>
+      <li>
+        <a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a>
+      </li>
+    </ul>
+    <h3>Ecosystem</h3>
+    <ul>
+      <li>
+        <a href="https://router.vuejs.org" target="_blank" rel="noopener"
+          >vue-router</a
+        >
+      </li>
+      <li>
+        <a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a>
+      </li>
+      <li>
+        <a
+          href="https://github.com/vuejs/vue-devtools#vue-devtools"
+          target="_blank"
+          rel="noopener"
+          >vue-devtools</a
+        >
+      </li>
+      <li>
+        <a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener"
+          >vue-loader</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://github.com/vuejs/awesome-vue"
+          target="_blank"
+          rel="noopener"
+          >awesome-vue</a
+        >
+      </li>
+    </ul>
+  </div>
 </template>
 
 <script>
-    // 用export，不需要new Vue() {}
-    export default {
-        data () {
-            return {
-                arrs: [1, 2, 3, 4],
-                arr: [
-                    {
-                        num: 1, name: '个人博客',
-                        link: 'http://blog.gupern.com'
-                    },
-                    {
-                        num: 2, name: '本项目Github地址',
-                        link: 'https://github.com/Gupern/pnav'
-                    },
-                    {
-                        num: 3, name: 'stackshare',
-                        link: 'https://stackshare.io/Gupern/my-stack'
-                    },
-                ]
-            }
-        }
-    }
+export default {
+  name: "HelloWorld",
+  props: {
+    msg: String,
+  },
+};
 </script>
 
-<style>
-#table1 {
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  align-items: center;
-  color: #2c3e50;
-  /* margin-top: 60px; */
-  margin: 0 auto;
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style scoped>
+h3 {
+  margin: 40px 0 0;
+}
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+li {
+  display: inline-block;
+  margin: 0 10px;
+}
+a {
+  color: #42b983;
 }
 </style>

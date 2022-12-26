@@ -39,3 +39,4 @@ CREATE TABLE `subscribe_msg`
 alter table subscribe_msg modify `popup_scene` text default null comment '弹窗场景，0代表在小程序页面内';
 alter table subscribe_msg modify `msg_type` text default null comment '信息类型，默认为event';
 alter table subscribe_msg modify `event` text default null comment '信息事件';
+alter table subscribe_msg modify `subscribe_status_string` text default null comment '订阅结果（accept接收；reject拒收）';

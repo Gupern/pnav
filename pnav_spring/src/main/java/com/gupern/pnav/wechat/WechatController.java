@@ -20,12 +20,6 @@ public class WechatController {
         this.service = service;
     }
 
-    @RequestMapping(value = "/hello", method = GET)
-    @ResponseBody
-    public Object sayHelloWorld() {
-        return service.sayHelloWorld();
-    }
-
     @RequestMapping(value = "/miniprogram/push", method = {GET, POST})
     @ResponseBody // 兼容post方式和get方式
     public Object miniprogramPush(HttpServletRequest httpServletRequest, @RequestBody(required = false) JSONObject dto) {
@@ -75,4 +69,5 @@ public class WechatController {
     public Object updatePersonalProjectInfo(@RequestBody JSONObject dto) {
         return service.updatePersonalProjectInfo(dto);
     }
+
 }

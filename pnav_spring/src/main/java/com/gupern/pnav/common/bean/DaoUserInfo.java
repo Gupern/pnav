@@ -1,5 +1,6 @@
-package com.gupern.pnav.wechat.bean;
+package com.gupern.pnav.common.bean;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -17,9 +18,7 @@ import java.sql.Date;
 @Table(name = "user_info")
 public class DaoUserInfo {
     @Id // 表示这是primary key
-//    @GeneratedValue(strategy = GenerationType.AUTO) // 表示自增
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private String id;
     private String openid;
     @Column(name = "session_key")
     private String sessionKey;
@@ -57,4 +56,5 @@ public class DaoUserInfo {
     @UpdateTimestamp
     @Column(name = "updated_time")
     private Date updatedTime;
+    private String password;
 }
