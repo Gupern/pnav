@@ -187,11 +187,47 @@ public class H5ServiceImpl implements H5Service {
     /*
      * @author: Gupern
      * @date: 2022/11/6 16:00
-     * @description:
+     * @description: 更新卖出基金净值
+     */
+    public Object updateBuyFundUnv(JSONObject dto) {
+        float unv = dto.getFloatValue("unv");
+        log.info(dto.toString());
+        int fundRecordId = dto.getIntValue("fundRecordId");
+        // 查询表数据
+        DaoFundRecord fundRecord = repositoryFundRecord.findById(fundRecordId);
+        DaoSharesRunning sharesRunning = repositorySharesRunning.findByFundRecordId(fundRecordId);
+        if (fundRecord.getOperation()!=0) {
+            return ResultMsg.fail("400", "该记录不是购买记录，无法修改");
+        }
+        if (sharesRunning.getSharesRemaining() != sharesRunning.getShares()) {
+            return ResultMsg.fail("400", "该记录份额已被使用，无法修改");
+        }
+
+        // 更新净值
+        fundRecord.setUnv(unv);
+        // 更新买入份额
+        double shares = Math.round(fundRecord.getAmount() / unv * 100) / 100.0;
+        fundRecord.setShares((float) shares);
+        repositoryFundRecord.save(fundRecord);
+
+        // 同步更新份额运营表的数据
+        sharesRunning.setUnv(unv);
+        sharesRunning.setShares((float) shares);
+        sharesRunning.setSharesRemaining((float) shares);
+        repositorySharesRunning.save(sharesRunning);
+
+        JSONObject returnObj = new JSONObject();
+        returnObj.put("msg", "success");
+        returnObj.put("code", "200");
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+
+    }
+    /*
+     * @author: Gupern
+     * @date: 2022/11/6 16:00
+     * @description: 更新卖出基金净值
      */
     public Object updateOperationProfit(JSONObject dto) {
-        // 获取userId
-        String userId = UserRequest.getUserIdInToken(redisUtil);
         log.info(dto.toString());
         int operationProfitId = dto.getIntValue("operationProfitId");
         // 查询该操作盈利表数据

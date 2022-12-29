@@ -3,15 +3,13 @@ package com.gupern.pnav.common;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.web.bind.annotation.*;
 
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
-
 @RestController
 @RequestMapping("/common")
-public class commonController {
+public class CommonController {
 
-    private final commonServiceImpl service;
+    private final CommonServiceImpl service;
 
-    public commonController(commonServiceImpl service) {
+    public CommonController(CommonServiceImpl service) {
         this.service = service;
     }
 

@@ -21,4 +21,7 @@ public interface RepositoryOperationProfit extends CrudRepository<DaoOperationPr
 
     @Query(value = "select * from operation_profit where id = ?1", nativeQuery = true)
    DaoOperationProfit findById(int operationProfitId);
+
+    @Query(value = "select * from operation_profit where fund_record_id = ?1", nativeQuery = true)
+    DaoOperationProfit findByFundRecordId(int fundRecordId);
 }

@@ -12,6 +12,8 @@ public interface H5Service {
 
     Object updateOperationProfit(JSONObject dto);
 
+    Object updateBuyFundUnv(JSONObject dto);
+
     Object deleteOperationProfit(JSONObject dto);
 
     Object updateSharesRunning(JSONObject dto);

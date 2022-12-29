@@ -8,17 +8,14 @@ import com.gupern.pnav.common.bean.ResultMsg;
 import com.gupern.pnav.common.util.CryptoUtil;
 import com.gupern.pnav.common.util.RedisUtil;
 import com.gupern.pnav.common.util.StringUtil;
-import com.gupern.pnav.h5.bean.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
-public class commonServiceImpl implements commonService {
-    private static Logger log = LoggerFactory.getLogger(commonServiceImpl.class);
+public class CommonServiceImpl implements CommonService {
+    private static Logger log = LoggerFactory.getLogger(CommonServiceImpl.class);
     @Autowired
     private RepositoryUserInfo repositoryUserInfo;
     @Autowired

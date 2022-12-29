@@ -52,7 +52,7 @@
             <van-col class="solidVanCol" span="5">{{item.sharesRemaining}}</van-col>
             <van-col class="solidVanCol" span="4">{{item.zeroCost}}</van-col>
             <template #right>
-              <van-button class="solidVanCol" type="default" text="卖出"
+              <van-button class="solidVanCol" type="warning" text="卖出份额"
                 @click="clickSellFundButton(item)" />
             </template>
           </van-swipe-cell>
@@ -74,8 +74,8 @@
             <van-col class="solidVanCol" span="5">{{item.unvSold}}</van-col>
             <van-col class="solidVanCol" span="4">{{item.profit}}</van-col>
             <template #right>
-              <van-button class="solidVanCol" type="warning" square text="修改"
-                @click="clickModifyFundButton(item)" />
+              <van-button class="solidVanCol" type="warning" square text="修改卖出基金净值"
+                @click="clickModifySellFundUnvButton(item)" />
             </template>
           </van-swipe-cell>
         </van-row>
@@ -96,8 +96,10 @@
             <van-col class="solidVanCol" span="4">{{item.amount}}</van-col>
             <van-col class="solidVanCol" span="4">{{item.shares}}</van-col>
             <template #right>
-              <van-button class="solidVanCol" type="warning" square text="修改"
+              <van-button class="solidVanCol" type="warning" square text="修改日期"
                 :value="updateFundDate" @click="clickModifyDateButton(item)" />
+              <van-button v-if="item.operation===0" class="solidVanCol" type="warning" square
+                text="修改买入净值" :value="updateFundDate" @click="clickModifyBuyFundUnvButton(item)" />
             </template>
           </van-swipe-cell>
         </van-row>
@@ -106,7 +108,7 @@
     <van-popup class="popup" v-model="showBuyFundPopup">
       <van-form @submit="buyFund">
         <van-cell-group inset>
-          <van-field v-model="updateFundUnv" type="number" label="单位净值" placeholder="请输入预估单位净值" />
+          <van-field v-model="updateFundUnv" type="number" label="预估单位净值" placeholder="请输入预估单位净值" />
           <van-field v-model="updateFundAmount" type="number" label="购买金额"
             placeholder="请输入需购买的金额" />
         </van-cell-group>
@@ -120,7 +122,7 @@
     <van-popup class="popup" v-model="showSellFundPopup">
       <van-form @submit="sellFund">
         <van-cell-group inset>
-          <van-field v-model="updateFundUnv" type="number" label="单位净值" placeholder="请输入预估单位净值" />
+          <van-field v-model="updateFundUnv" type="number" label="预估单位净值" placeholder="请输入预估单位净值" />
           <van-field v-model="updateFundShares" type="number" label="卖出份额"
             placeholder="请输入需卖出的份额" />
         </van-cell-group>
@@ -131,10 +133,24 @@
         </div>
       </van-form>
     </van-popup>
-    <van-popup class="popup" v-model="showModifyFundPopup">
-      <van-form @submit="modifyFund">
+    <van-popup class="popup" v-model="showModifyBuyFundUnvPopup">
+      <van-form @submit="modifyBuyFundUnv">
         <van-cell-group inset>
-          <van-field v-model="updateFundUnv" type="number" label="单位净值" placeholder="请输入要更新的单位净值" />
+          <van-field v-model="updateFundUnv" type="number" label="实际买入净值"
+            placeholder="请输入要更新的买入单位净值" />
+        </van-cell-group>
+        <div style="margin: 16px;">
+          <van-button round block type="default">
+            提交
+          </van-button>
+        </div>
+      </van-form>
+    </van-popup>
+    <van-popup class="popup" v-model="showModifySellFundUnvPopup">
+      <van-form @submit="modifySellFundUnv">
+        <van-cell-group inset>
+          <van-field v-model="updateFundUnv" type="number" label="实际卖出净值"
+            placeholder="请输入要更新的卖出单位净值" />
         </van-cell-group>
         <div style="margin: 16px;">
           <van-button round block type="default">
@@ -163,7 +179,8 @@ export default {
       active: 0,
       showBuyFundPopup: false,
       showSellFundPopup: false,
-      showModifyFundPopup: false,
+      showModifyBuyFundUnvPopup: false,
+      showModifySellFundUnvPopup: false,
       showModifyDatePopup: false,
       updateFundUnv: null,
       updateFundAmount: null,
@@ -231,9 +248,14 @@ export default {
       this.updateSharesRunningId = item.id;
       console.log(item);
     },
-    clickModifyFundButton(item) {
-      this.showModifyFundPopup = true;
+    clickModifySellFundUnvButton(item) {
+      this.showModifySellFundUnvPopup = true;
       this.updateOperationProfitId = item.id;
+      console.log(item);
+    },
+    clickModifyBuyFundUnvButton(item) {
+      this.showModifyBuyFundUnvPopup = true;
+      this.updateFundRecordId = item.id;
       console.log(item);
     },
     clickModifyDateButton(item) {
@@ -277,7 +299,7 @@ export default {
         }
       );
     },
-    modifyFund() {
+    modifySellFundUnv() {
       let data = {
         operation: 1, // 0买入，1卖出
         unv: this.updateFundUnv,
@@ -290,7 +312,7 @@ export default {
           token: this.token,
         },
       };
-      this.$http.post(this.BASE_API + globalConstant.modifyFundRecordUrl, data, headers).then(
+      this.$http.post(this.BASE_API + globalConstant.modifySellFundUnvUrl, data, headers).then(
         response => {
           console.log(response);
           if (response.body.code !== '200') {
@@ -298,7 +320,40 @@ export default {
           } else {
             this.$toast('成功');
           }
-          this.showModifyFundPopup = false;
+          this.showModifySellFundUnvPopup = false;
+          this.init();
+        },
+        error => {
+          if (error.body.code === '400') {
+            this.$toast('token过期，请重新登录');
+            this.$router.push('/');
+          }
+          console.log(error);
+        }
+      );
+    },
+    modifyBuyFundUnv() {
+      let data = {
+        operation: 1, // 0买入，1卖出
+        unv: this.updateFundUnv,
+        fundRecordId: this.updateFundRecordId,
+      };
+      console.log('data:', data);
+      let headers = {
+        headers: {
+          'Content-Type': 'application/json',
+          token: this.token,
+        },
+      };
+      this.$http.post(this.BASE_API + globalConstant.modifyBuyFundUnvUrl, data, headers).then(
+        response => {
+          console.log(response);
+          if (response.body.code !== '200') {
+            this.$toast('请求异常' + response.body.msg);
+          } else {
+            this.$toast('成功');
+          }
+          this.showModifyBuyFundUnvPopup = false;
           this.init();
         },
         error => {
