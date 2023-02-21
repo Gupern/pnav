@@ -1,4 +1,4 @@
-package com.gupern.pnav.wechat.bean;
+package com.gupern.pnav.h5.bean;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -20,7 +20,8 @@ public class DaoOperationProfit {
     @Id // 表示这是primary key
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 表示自增
     private int id;
-    private String openid;
+    @Column(name = "user_id")
+    private String userId;
     @Column(name = "fund_name")
     private String fundName;
     @Column(name = "fund_code")

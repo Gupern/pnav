@@ -1,10 +1,8 @@
-package com.gupern.pnav.wechat.bean;
+package com.gupern.pnav.h5.bean;
 
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-import javax.transaction.Transactional;
 import java.util.List;
 
 /**
@@ -17,4 +15,13 @@ import java.util.List;
 public interface RepositoryOperationProfit extends CrudRepository<DaoOperationProfit, Integer> {
     @Query(value = "select * from operation_profit where openid = ?1", nativeQuery = true)
     List<DaoOperationProfit> findAllByOpenid(String openid);
+
+    @Query(value = "select * from operation_profit where user_id = ?1", nativeQuery = true)
+    List<DaoOperationProfit> findAllByUserId(String userId);
+
+    @Query(value = "select * from operation_profit where id = ?1", nativeQuery = true)
+   DaoOperationProfit findById(int operationProfitId);
+
+    @Query(value = "select * from operation_profit where fund_record_id = ?1", nativeQuery = true)
+    DaoOperationProfit findByFundRecordId(int fundRecordId);
 }

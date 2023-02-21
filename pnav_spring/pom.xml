@@ -73,6 +73,10 @@
             <version>1.2.13</version>
         </dependency>
         <!--分页工具 end-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.swagger</groupId>

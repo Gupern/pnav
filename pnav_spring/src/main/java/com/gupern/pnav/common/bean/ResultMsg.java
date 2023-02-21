@@ -51,8 +51,8 @@ public class ResultMsg implements Serializable {
     public static ResultMsg success(ResponseEnum responseEnum,Object data){
         return new ResultMsg(responseEnum.getCode(),responseEnum.getMsg(),data);
     }
-    public static ResultMsg success(String code,String msg, Object data){
-        return new ResultMsg(Constant.RESPONSE_SUCCEED_CODE,msg,data);
+    public static ResultMsg success(String code,String msg){
+        return new ResultMsg(code, msg);
     }
     public static ResultMsg success(String code,String msg, String data){
         return new ResultMsg(Constant.RESPONSE_SUCCEED_CODE,msg,data);
