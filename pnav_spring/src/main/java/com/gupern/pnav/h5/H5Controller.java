@@ -53,6 +53,13 @@ public class H5Controller {
     public Object updateBuyFundUnv(@RequestBody JSONObject dto) {
         return service.updateBuyFundUnv(dto);
     }
+
+    @RequestMapping(value = "/queryTodayStock", method = POST)
+    @ResponseBody
+    @TokenValidator
+    public Object queryTodayStock(@RequestBody JSONObject dto) {
+        return service.queryTodayStock(dto);
+    }
 //    @RequestMapping(value = "/deleteOperationProfit", method = POST)
 //    @ResponseBody
 //    @TokenValidator
