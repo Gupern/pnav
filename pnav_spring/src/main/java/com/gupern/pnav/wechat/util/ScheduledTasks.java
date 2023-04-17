@@ -148,7 +148,7 @@ public class ScheduledTasks {
         int time = Integer.parseInt(date);
 
         int startTime = 830; // 代表08:30
-        int endTime = 2200; // 代表22:00
+        int endTime = 1000; // 代表10:00
 
         if (time > startTime && time < endTime && String.valueOf(time).endsWith(pattern)) {
             log.info("现在是推送时间");

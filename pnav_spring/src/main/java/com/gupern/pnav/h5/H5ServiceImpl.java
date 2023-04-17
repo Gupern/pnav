@@ -1,5 +1,6 @@
 package com.gupern.pnav.h5;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.gupern.pnav.common.bean.ResponseEnum;
 import com.gupern.pnav.common.bean.ResultMsg;
@@ -12,7 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class H5ServiceImpl implements H5Service {
@@ -27,7 +33,11 @@ public class H5ServiceImpl implements H5Service {
     private RepositorySharesRunning repositorySharesRunning;
 
     @Autowired
+    private RepositoryQuanterHotList repositoryQuanterHotList;
+
+    @Autowired
     private RedisUtil redisUtil;
+
     /*
      * @author: Gupern
      * @date: 2022/11/3 20:22
@@ -53,8 +63,8 @@ public class H5ServiceImpl implements H5Service {
             double shares = Math.round(dto.getFloatValue("amount") / dto.getFloatValue("unv") * 100) / 100.0;
             newFundRecord.setShares((float) shares);
             newFundRecord.setAmount(dto.getFloatValue("amount"));
-        } else if (operation == 1){ // 1是卖出，则计算金额
-            double amount = Math.round(dto.getFloatValue("shares") * dto.getFloatValue("unv")*100) / 100.0;
+        } else if (operation == 1) { // 1是卖出，则计算金额
+            double amount = Math.round(dto.getFloatValue("shares") * dto.getFloatValue("unv") * 100) / 100.0;
             newFundRecord.setAmount((float) amount);
             newFundRecord.setShares(dto.getFloatValue("shares"));
         }
@@ -63,7 +73,7 @@ public class H5ServiceImpl implements H5Service {
         DaoFundRecord resSaveFundRecord = repositoryFundRecord.save(newFundRecord);
 
         // 同步新增份额运营表
-        if (operation==0) {
+        if (operation == 0) {
             DaoSharesRunning newSharesRunning = new DaoSharesRunning();
             newSharesRunning.setShares(newFundRecord.getShares());
             newSharesRunning.setUnv(newFundRecord.getUnv());
@@ -72,10 +82,10 @@ public class H5ServiceImpl implements H5Service {
             newSharesRunning.setSharesRemaining(newFundRecord.getShares());
             newSharesRunning.setPurchaseTime(new Date(System.currentTimeMillis()));
             repositorySharesRunning.save(newSharesRunning);
-        } else if (operation==1) {
+        } else if (operation == 1) {
             // 判断是否含有份额运营表的ID
             int sharesRunningId = dto.getIntValue("sharesRunningId");
-            if (sharesRunningId==0) {
+            if (sharesRunningId == 0) {
                 return ResultMsg.fail("400", "请求错误，未携带运营表ID");
             }
             DaoSharesRunning newSharesRunning = repositorySharesRunning.findById(sharesRunningId);
@@ -138,11 +148,11 @@ public class H5ServiceImpl implements H5Service {
         log.info("sharesRunningList: {}", sharesRunningList.toString());
         // 1. 计算出shares 总的持仓份额 = sum(基金记录表买入) - sum(基金记录表卖出)
         float shares = 0;
-        for (DaoFundRecord item:fundRecordList) {
-            if (item.getStatus()!=0) {
+        for (DaoFundRecord item : fundRecordList) {
+            if (item.getStatus() != 0) {
                 continue;
             }
-            if (item.getOperation()==0) {
+            if (item.getOperation() == 0) {
                 shares += item.getShares();
             } else {
                 shares -= item.getShares();
@@ -154,12 +164,12 @@ public class H5ServiceImpl implements H5Service {
         float amount = 0;
         // 计算出零成本份额
         float zeroShares = 0;
-        for (DaoSharesRunning item:sharesRunningList) {
+        for (DaoSharesRunning item : sharesRunningList) {
             amount += item.getUnv() * item.getSharesRemaining();
             // 判断时间是否大于7天
-            Date buyDate  = item.getCreatedTime();
+            Date buyDate = item.getCreatedTime();
             int passDays = Math.abs((int) ((new Date(System.currentTimeMillis()).getTime() - buyDate.getTime()) / (1000 * 3600 * 24)));
-            if (passDays >=7 ) {
+            if (passDays >= 7) {
                 zeroShares += item.getShares();
             }
         }
@@ -167,7 +177,7 @@ public class H5ServiceImpl implements H5Service {
 
         // 3. 计算出profit 已获利
         float profit = 0;
-        for (DaoOperationProfit item:operationProfitList) {
+        for (DaoOperationProfit item : operationProfitList) {
             profit += item.getProfit();
         }
         log.info("profit: {}", profit);
@@ -184,6 +194,7 @@ public class H5ServiceImpl implements H5Service {
 
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
+
     /*
      * @author: Gupern
      * @date: 2022/11/6 16:00
@@ -196,7 +207,7 @@ public class H5ServiceImpl implements H5Service {
         // 查询表数据
         DaoFundRecord fundRecord = repositoryFundRecord.findById(fundRecordId);
         DaoSharesRunning sharesRunning = repositorySharesRunning.findByFundRecordId(fundRecordId);
-        if (fundRecord.getOperation()!=0) {
+        if (fundRecord.getOperation() != 0) {
             return ResultMsg.fail("400", "该记录不是购买记录，无法修改");
         }
         if (sharesRunning.getSharesRemaining() != sharesRunning.getShares()) {
@@ -222,6 +233,7 @@ public class H5ServiceImpl implements H5Service {
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
 
     }
+
     /*
      * @author: Gupern
      * @date: 2022/11/6 16:00
@@ -246,7 +258,7 @@ public class H5ServiceImpl implements H5Service {
         // 更新卖出净值
         fundRecord.setUnv(operationProfit.getUnvSold());
         // 更新卖出金额
-        double amount = Math.round(fundRecord.getShares()* fundRecord.getUnv()*100) / 100.0;
+        double amount = Math.round(fundRecord.getShares() * fundRecord.getUnv() * 100) / 100.0;
         fundRecord.setAmount((float) amount);
         repositoryFundRecord.save(fundRecord);
 
@@ -255,6 +267,7 @@ public class H5ServiceImpl implements H5Service {
         returnObj.put("code", "200");
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
+
     /*
      * @author: Gupern
      * @date: 2022/11/6 16:00
@@ -269,6 +282,7 @@ public class H5ServiceImpl implements H5Service {
         returnObj.put("code", "200");
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
+
     /*
      * @author: Gupern
      * @date: 2022/11/6 16:00
@@ -282,6 +296,7 @@ public class H5ServiceImpl implements H5Service {
         returnObj.put("code", "200");
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
+
     /*
      * @author: Gupern
      * @date: 2022/11/6 16:00
@@ -309,7 +324,7 @@ public class H5ServiceImpl implements H5Service {
         repositoryFundRecord.save(fundRecord);
 
         // 如果该基金是买的基金，则同步更新份额运营表
-        if (fundRecord.getOperation()==0) {
+        if (fundRecord.getOperation() == 0) {
             DaoSharesRunning sharesRunning = repositorySharesRunning.findByFundRecordId(fundRecordId);
             sharesRunning.setPurchaseTime(buyDate);
             repositorySharesRunning.save(sharesRunning);
@@ -318,6 +333,54 @@ public class H5ServiceImpl implements H5Service {
         JSONObject returnObj = new JSONObject();
         returnObj.put("msg", "success");
         returnObj.put("code", "200");
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
+    }
+
+    /*
+     * @author: Gupern
+     * @date: 2023/4/16 21:40
+     * @description:
+     */
+    public Object queryTodayStock(JSONObject dto) {
+        log.info(dto.toString());
+        JSONObject returnObj = new JSONObject();
+        java.util.Date javaDateToday = new java.util.Date();
+        // 获取当天日期 格式为%Y-%m-%d
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        String startTimeToday = df.format(javaDateToday) + " 08:45:00";
+        String endTimeToday = df.format(javaDateToday) + " 09:05:00";
+        // 从数据库中搜索今天的热股
+        List<String> todayHotList =
+                JSONArray.parseArray(repositoryQuanterHotList.findHotListByDate(startTimeToday, endTimeToday).get(0).getSymbolList(), String.class);
+
+        // 获取昨天日期 格式为%Y-%m-%d
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(javaDateToday);
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
+        java.util.Date javaDatePreday = calendar.getTime();
+        String startTimePreday = df.format(javaDatePreday) + " 08:45:00";
+        String endTimePreday = df.format(javaDatePreday) + " 09:05:00";
+        // 从数据库中搜索昨天的热股
+        List<String> predayHotList =
+                JSONArray.parseArray(repositoryQuanterHotList.findHotListByDate(startTimePreday,
+                        endTimePreday).get(0).getSymbolList(), String.class);
+        log.info(predayHotList.toString());
+        log.info(todayHotList.toString());
+        // 取predayHotList的前10个
+        List<String> predayHotListTop10 = predayHotList.subList(0, 10);
+        // 默认buyList为今天前10
+        List<String> buyList = todayHotList.subList(0, 10);
+        // 找出今天的热股前10，但不在昨天前10的股票
+        buyList.removeAll(predayHotListTop10);
+        // sellList: 不在今天前49的，都卖出
+        List<String> sellList = todayHotList.subList(0, 49);
+        // 获取元素中 30 开头的元素 创业板
+        sellList = sellList.stream().filter(s -> !s.split("\\.")[1].startsWith("00")).collect(Collectors.toList());
+        buyList = buyList.stream().filter(s -> !s.split("\\.")[1].startsWith("00")).collect(Collectors.toList());
+        String date = df.format(javaDateToday);
+        returnObj.put("date", date);
+        returnObj.put("buyList", buyList);
+        returnObj.put("sellList", sellList);
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, returnObj);
     }
 }

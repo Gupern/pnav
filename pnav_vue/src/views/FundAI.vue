@@ -160,6 +160,10 @@
       </van-form>
     </van-popup>
     <van-calendar v-model="showModifyDatePopup" @confirm="modifyDate" :min-date="minDate" />
+    <van-tabbar route>
+      <van-tabbar-item replace to="/StockAI" icon="gold-coin-o">股票</van-tabbar-item>
+      <van-tabbar-item replace to="/FundAI" icon="bill">基金</van-tabbar-item>
+    </van-tabbar>
   </div>
   <!-- 添加基金接口 -->
 
@@ -200,7 +204,7 @@ export default {
   },
   methods: {
     init() {
-      this.token = this.$route.query.token;
+      this.token = window.sessionStorage.getItem('token');
       this.packageOrderId = this.$route.query.packageOrderId;
       let data = {};
       let headers = {

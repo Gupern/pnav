@@ -21,4 +21,7 @@ public interface H5Service {
     Object deleteSharesRunning(JSONObject dto);
 
     Object updateFundDate(JSONObject dto) throws ParseException;
+
+    Object queryTodayStock(JSONObject dto);
+
 }
