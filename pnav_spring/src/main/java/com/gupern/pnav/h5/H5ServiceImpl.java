@@ -399,6 +399,21 @@ public class H5ServiceImpl implements H5Service {
         List<String> buyList2 = repositoryQuanterStockBasic.findNameListBySymbolList(buySet2);
         log.info(todayHotList.toString());
         log.info(sellList.toString());
+        log.info("排序前");
+        log.info(buyList1.toString());
+        log.info(buyList2.toString());
+        // 按热股排序
+        buyList1.sort((o1, o2) -> {
+            int index1 = todayHotList.indexOf(o1);
+            int index2 = todayHotList.indexOf(o2);
+            return index1 - index2;
+        });
+        buyList2.sort((o1, o2) -> {
+            int index1 = todayHotList.indexOf(o1);
+            int index2 = todayHotList.indexOf(o2);
+            return index1 - index2;
+        });
+        log.info("排序后");
         log.info(buyList1.toString());
         log.info(buyList2.toString());
         // 获取buyList中30开头的元素
