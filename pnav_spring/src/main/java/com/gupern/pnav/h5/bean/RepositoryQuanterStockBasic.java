@@ -1,11 +1,10 @@
 package com.gupern.pnav.h5.bean;
 
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author: Gupern
@@ -14,9 +13,8 @@ import java.util.List;
  * This will be AUTO IMPLEMENTED by Spring into a Bean called RepositoryXXX
  * CRUD refers Create, Read, Update, Delete
  */
-public interface RepositoryQuanterHotList extends CrudRepository<DaoQuanterHotList, Integer> {
-    @Query(value = "select * from quanter_hot_list where source = 'eastmoney' and created_time > ?1 and created_time " +
-            "< ?2",
+public interface RepositoryQuanterStockBasic extends CrudRepository<DaoQuanterStockBasic, Integer> {
+    @Query(value = "select name from quanter_stock_basic where symbol in ?1",
             nativeQuery = true)
-    List<DaoQuanterHotList> findHotListByDate(String startDate, String endDate);
+    List<String> findNameListBySymbolList(Set<String> symbolList);
 }
