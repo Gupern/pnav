@@ -366,53 +366,55 @@ public class H5ServiceImpl implements H5Service {
         log.info(startTimePreday + endTimePreday + predayHotList.toString());
         log.info(startTimeToday + endTimeToday + todayHotList.toString());
         // 取predayHotList的前10个
-        List<String> predayHotListTop10 = predayHotList.subList(0, 10);
+        List<String> predayHotListTop10 = predayHotList.subList(1, 9);
         log.info("predayHotListTop10: {}",  predayHotListTop10);
         // 默认buyList为今天前10 使用拷贝
-        List<String> buyList = new ArrayList<>(todayHotList.subList(0, 10));
+        List<String> buyList = new ArrayList<>(todayHotList.subList(2, 9));
         log.info("buyList: {}",  buyList);
         // 找出今天的热股前10，但不在昨天前10的股票
         buyList.removeAll(predayHotListTop10);
         log.info("buyList finally: {}",  buyList);
         // sellList: 不在今天前49的，都卖出
         List<String> sellList;
-        if (todayHotList.size() < 49) {
+        if (todayHotList.size() < 39) {
             sellList = new ArrayList<>(todayHotList);
         } else {
-            sellList = todayHotList.subList(0, 49);
+            sellList = todayHotList.subList(0, 39);
         }
         // 获取元素中 30 开头的元素 创业板
 //        Set<String> sellSet =
 //                sellList.stream().filter(s -> !s.split("\\.")[1].startsWith("00")).collect(Collectors.toSet());
         Set<String> sellSet = sellList.stream().map(s -> s.split("\\.")[1])
                 .filter(s -> !s.startsWith("00"))
+                .filter(s -> !s.startsWith("60"))
                 .collect(Collectors.toSet());
         Set<String> buySet1 = buyList.stream().map(s -> s.split("\\.")[1])
                 .filter(s -> s.startsWith("30"))
                 .collect(Collectors.toSet());
-        Set<String> buySet2 = buyList.stream().map(s -> s.split("\\.")[1])
-                .filter(s -> s.startsWith("60"))
-                .collect(Collectors.toSet());
+//        Set<String> buySet2 = buyList.stream().map(s -> s.split("\\.")[1])
+//                .filter(s -> s.startsWith("60"))
+//                .collect(Collectors.toSet());
         // TODO 注意，这里因为stock_basic没经常更新，所以不包括新股
         sellList = repositoryQuanterStockBasic.findNameListBySymbolList(sellSet);
         List<String> buyList1 = repositoryQuanterStockBasic.findNameListBySymbolList(buySet1);
-        List<String> buyList2 = repositoryQuanterStockBasic.findNameListBySymbolList(buySet2);
+//        List<String> buyList2 = repositoryQuanterStockBasic.findNameListBySymbolList(buySet2);
+        List<String> buyList2 = new ArrayList<>();
         log.info(todayHotList.toString());
         log.info(sellList.toString());
         log.info("排序前");
         log.info(buyList1.toString());
-        log.info(buyList2.toString());
+//        log.info(buyList2.toString());
         // 按热股排序
         buyList1.sort((o1, o2) -> {
             int index1 = todayHotList.indexOf(o1);
             int index2 = todayHotList.indexOf(o2);
             return index1 - index2;
         });
-        buyList2.sort((o1, o2) -> {
-            int index1 = todayHotList.indexOf(o1);
-            int index2 = todayHotList.indexOf(o2);
-            return index1 - index2;
-        });
+//        buyList2.sort((o1, o2) -> {
+//            int index1 = todayHotList.indexOf(o1);
+//            int index2 = todayHotList.indexOf(o2);
+//            return index1 - index2;
+//        });
         log.info("排序后");
         log.info(buyList1.toString());
         log.info(buyList2.toString());
