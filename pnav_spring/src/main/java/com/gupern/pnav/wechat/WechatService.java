@@ -15,4 +15,8 @@ public interface WechatService {
     Object changeTask(JSONObject dto);
     Object getPersonalProjectInfo(JSONObject dto);
     Object updatePersonalProjectInfo(JSONObject dto);
+
+    Object recList(JSONObject dto);
+    Object recHisList(JSONObject dto);
+    Object recHisDetail(JSONObject dto);
 }

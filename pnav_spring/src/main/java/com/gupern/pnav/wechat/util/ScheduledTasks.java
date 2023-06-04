@@ -73,16 +73,13 @@ public class ScheduledTasks {
      * @author: Gupern
      * @date: 2022/3/13 11:20
      * @description: 定时任务，每分钟触发一次，然后查看是否满足用户订阅的时候，若满足，则进行推送
-     * 固定频率，每60*1000ms = 60000ms = 1min/次
+     * cron 定时， 每周一到周五，9点5分推送
      * from_user_name == openid == touser
      */
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(cron = "0 5 9 ? * MON-FRI")
+//    @Scheduled(cron = "0 40 9 * * *")  // 调试用
     public void reportCurrentTime() throws IOException {
         log.info("The time is now {}", dateFormat.format(new Date()));
-        // 检查是否为推送时间，若不是，则不进行操作
-        if (!isPushTime()) {
-            return;
-        }
         // 从数据库中获取订阅消息
         List<JSONObject> allFromUserName = repositorySubscribeMsg.findAllFromUserName();
         log.info("allFromUserName:{}", allFromUserName.toString());
@@ -129,33 +126,6 @@ public class ScheduledTasks {
 
             // 进行推送
             WechatUtil.sendSubscribeMsg(accessToken, requestJson);
-        }
-    }
-
-    /*
-     * @author: Gupern
-     * @date: 2022/3/12 23:22
-     * @description:  判断是否为推送时间，目前规则写死，后续可从数据库中获取用户配置的时间
-     * 目前规则：判断当前时间是否为30分，且在8:30--22:00之间
-     * 若是，则返回true
-     * 若不是，则返回false
-     * TODO 后续优化时间判断
-     */
-    private boolean isPushTime() {
-        SimpleDateFormat dateFormater = new SimpleDateFormat("HHmm");
-        String date = dateFormater.format(new Date());
-        log.info("date:{}", date);
-        int time = Integer.parseInt(date);
-
-        int startTime = 830; // 代表08:30
-        int endTime = 1000; // 代表10:00
-
-        if (time > startTime && time < endTime && String.valueOf(time).endsWith(pattern)) {
-            log.info("现在是推送时间");
-            return true;
-        } else {
-            log.info("现在不是推送时间");
-            return false;
         }
     }
 }

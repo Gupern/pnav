@@ -346,7 +346,7 @@ public class H5ServiceImpl implements H5Service {
         java.util.Date javaDateToday = new java.util.Date();
         // 获取当天日期 格式为%Y-%m-%d
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        String startTimeToday = df.format(javaDateToday) + " 08:45:00";
+        String startTimeToday = df.format(javaDateToday) + " 08:55:00";
         String endTimeToday = df.format(javaDateToday) + " 09:05:00";
         // 从数据库中搜索今天的热股
         List<String> todayHotList =

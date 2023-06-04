@@ -69,5 +69,20 @@ public class WechatController {
     public Object updatePersonalProjectInfo(@RequestBody JSONObject dto) {
         return service.updatePersonalProjectInfo(dto);
     }
+    @RequestMapping(value = "/miniprogram/stockAI/recList", method = POST)
+    @ResponseBody
+    public Object recList(@RequestBody JSONObject dto) {
+        return service.recList(dto);
+    }
+    @RequestMapping(value = "/miniprogram/stockAI/recHisList", method = POST)
+    @ResponseBody
+    public Object recHisList(@RequestBody JSONObject dto) {
+        return service.recHisList(dto);
+    }
+    @RequestMapping(value = "/miniprogram/stockAI/recHisDetail", method = POST)
+    @ResponseBody
+    public Object recHisDetail(@RequestBody JSONObject dto) {
+        return service.recHisDetail(dto);
+    }
 
 }

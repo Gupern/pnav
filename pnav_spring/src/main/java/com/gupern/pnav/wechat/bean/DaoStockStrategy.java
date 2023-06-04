@@ -1,40 +1,33 @@
 package com.gupern.pnav.wechat.bean;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.sql.Date;
-import java.sql.Timestamp;
 
 /**
  * @author: Gupern
- * @date: 2022/3/8 13:00
- * @description: 任务信息实体
+ * @date: 2023/6/4 05:24
+ * @description: 股票推荐策略实体
  */
 @Data
-@Entity
-@Table(name = "task_info")
-public class DaoTaskInfo {
+@Entity(name = "StockStrategy")
+@Table(name = "stock_strategy") // 指定表名
+public class DaoStockStrategy {
     @Id // 表示这是primary key
+    // 数据库中已经设置为自增，所以要用IDENTITY
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String openid;
-    private String project;
-    private String task;
-    private String comment;
-    private long count;
-    @Column(name = "change_count")
-    private long changeCount;
-    private int status;
+    @Column(name = "strategy_name")
+    private String strategyName;
     // 增加此注解，否则会为null
     @CreationTimestamp
     @Column(name = "created_time")
-    private Timestamp createdTime;
+    private Date createdTime;
     @UpdateTimestamp
     @Column(name = "updated_time")
-    private Timestamp updatedTime;
+    private Date updatedTime;
 
 }

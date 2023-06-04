@@ -6,6 +6,7 @@ import com.gupern.pnav.common.bean.Constant;
 import com.gupern.pnav.common.bean.ResponseEnum;
 import com.gupern.pnav.common.bean.ResultMsg;
 import com.gupern.pnav.common.util.CryptoUtil;
+import com.gupern.pnav.common.util.RequestUtil;
 import com.gupern.pnav.wechat.bean.*;
 import com.gupern.pnav.wechat.util.WechatUtil;
 import org.slf4j.Logger;
@@ -14,16 +15,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.gupern.pnav.wechat.util.WechatUtil.*;
 
 @Service
 public class WechatServiceImpl implements WechatService {
     private static Logger log = LoggerFactory.getLogger(WechatServiceImpl.class);
+
+    private static final RestTemplate restTemplate = RequestUtil.getInstance().myRestTemplate;
+    private String tsUrl = "http://api.tushare.pro";
+
+    @Value("${wechat.miniprogram.tushare.token}")
+    private String tsToken = "tushareToken";
 
     // 公众号appid 从properties文件中获取
     @Value("${wechat.miniprogram.appid}")
@@ -44,6 +55,10 @@ public class WechatServiceImpl implements WechatService {
     private RepositorySubscribeMsg repositorySubscribeMsg;
     @Autowired
     private RepositoryTaskInfoMsg repositoryTaskInfoMsg;
+    @Autowired
+    private RepositoryStockRecommendDetail repositoryStockRecommendDetail;
+    @Autowired
+    private RepositoryStockStrategy repositoryStockStrategy;
 
 
     public Object sayHelloWorld() {
@@ -262,6 +277,140 @@ public class WechatServiceImpl implements WechatService {
         daoTaskInfo.setTask(task);
         repositoryTaskInfoMsg.save(daoTaskInfo);
         return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, "success");
+    }
+
+    /**
+     * 获取推荐策略列表
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public Object recList(JSONObject dto) {
+        // 获取策略列表
+        Iterable<DaoStockStrategy> recList = repositoryStockStrategy.findAll();
+        log.info("recList:{}", recList);
+        // 获取当前时间
+        Date date = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//        String today = dateFormat.format(date);
+        // TODO 调试用
+        String today = "2023-04-03";
+        List<JSONObject> res = new ArrayList<>();
+        // 获取该策略下当天的股票推荐列表
+        for (DaoStockStrategy item : recList) {
+            int strategyId = item.getId();
+            List<JSONObject> allList = repositoryStockRecommendDetail.findListByStrategyId(strategyId, today);
+            List<String> buyList = allList.stream()
+                    .filter(x -> x.getInteger("recommend_operation").equals(0))
+                    .map(x -> x.getString("stock_code"))
+                    .collect(Collectors.toList());
+            List<String> sellList = allList.stream()
+                    .filter(x -> x.getInteger("recommend_operation").equals(1))
+                    .map(x -> x.getString("stock_code"))
+                    .collect(Collectors.toList());
+            List<String> holdingList = allList.stream()
+                    .filter(x -> x.getInteger("recommend_operation").equals(2))
+                    .map(x -> x.getString("stock_code"))
+                    .collect(Collectors.toList());
+            JSONObject tmp = new JSONObject();
+            tmp.put("strategyId", strategyId);
+            tmp.put("strategyName", item.getStrategyName());
+            tmp.put("buyList", buyList);
+            tmp.put("sellList", sellList);
+            tmp.put("holdingList", holdingList);
+            res.add(tmp);
+        }
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, res);
+    }
+
+    /**
+     * 获取推荐策略历史列表
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public Object recHisList(JSONObject dto) {
+        int strategyId = dto.getInteger("strategyId");
+        List<String> recHisList = repositoryStockRecommendDetail.findRecHisListByStrategyId(strategyId);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, recHisList);
+    }
+
+    /**
+     * 获取推荐策略历史详情
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public Object recHisDetail(JSONObject dto) {
+        int strategyId = dto.getInteger("strategyId");
+        String recommendDate = dto.getString("recommendDate");
+        // 获取该天的买入列表
+        List<JSONObject> buyList = repositoryStockRecommendDetail.findBuyListByStrategyIdAndDate(strategyId,
+                recommendDate);
+        log.info("buyList:{}", buyList);
+        // 获取buyList中的股票代码
+        List<String> buyStockCodeList = buyList.stream()
+                .map(x -> x.getString("stock_code"))
+                .collect(Collectors.toList());
+        // 请求tushare获取股票价格
+        JSONArray tsRes = getStockPriceList(recommendDate, buyStockCodeList);
+        JSONObject res = new JSONObject();
+        res.put("buyList", buyList);
+        res.put("tsRes", tsRes);
+        return ResultMsg.success(ResponseEnum.REQUEST_SUCCEED, res);
+    }
+    // 请求tushare接口
+    private JSONArray getStockPriceList(String recommendDate, List<String> buyStockCodeList) {
+        JSONObject requestJson = new JSONObject();
+        requestJson.put("token", tsToken);
+        requestJson.put("api_name", "daily");
+        JSONObject params = new JSONObject();
+        String start_date = recommendDate.replace("-", "");
+        params.put("start_date", start_date);
+        // 求start_date的后十一天
+        String end_date = "";
+        try {
+            Date date = new SimpleDateFormat("yyyyMMdd").parse(start_date);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            calendar.add(Calendar.DAY_OF_MONTH, 11);
+            end_date = new SimpleDateFormat("yyyyMMdd").format(calendar.getTime());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        // 将start_date转为date类型
+
+
+
+        params.put("end_date", end_date);
+        // 将buyStockCodeList转为字符串
+        String buyStockCodeListStr = String.join(",", buyStockCodeList);
+        params.put("ts_code", buyStockCodeListStr);
+        requestJson.put("params", params);
+        requestJson.put("fields", "ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount");
+        log.info("requestJson:{}", requestJson);
+        // 其他参数在post json里
+        JSONObject responseJson = restTemplate.postForObject(tsUrl, requestJson, JSONObject.class);
+        JSONArray itemsList10day =
+                Objects.requireNonNull(responseJson).getJSONObject("data").getJSONArray("items");
+        // 请求最新的价格数据
+        // 获取当前时间，格式为yyyyMMdd
+        Date date = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+        String now_date = dateFormat.format(date);
+        params.put("start_date", now_date);
+        params.put("end_date", now_date);
+        requestJson.put("params", params);
+        responseJson = restTemplate.postForObject(tsUrl, requestJson, JSONObject.class);
+        JSONArray itemsListNow =
+                Objects.requireNonNull(responseJson).getJSONObject("data").getJSONArray("items");
+        // 将itemsListNow中的数据添加到itemsList10day中
+        itemsList10day.addAll(itemsListNow);
+        log.info("itemsList10day:{}", itemsList10day);
+        return itemsList10day;
     }
 
     /*
