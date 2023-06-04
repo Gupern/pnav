@@ -293,9 +293,9 @@ public class WechatServiceImpl implements WechatService {
         // 获取当前时间
         Date date = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//        String today = dateFormat.format(date);
-        // TODO 调试用
-        String today = "2023-04-03";
+        String today = dateFormat.format(date);
+//         TODO 调试用
+//        String today = "2023-04-03";
         List<JSONObject> res = new ArrayList<>();
         // 获取该策略下当天的股票推荐列表
         for (DaoStockStrategy item : recList) {
@@ -303,15 +303,15 @@ public class WechatServiceImpl implements WechatService {
             List<JSONObject> allList = repositoryStockRecommendDetail.findListByStrategyId(strategyId, today);
             List<String> buyList = allList.stream()
                     .filter(x -> x.getInteger("recommend_operation").equals(0))
-                    .map(x -> x.getString("stock_code"))
+                    .map(x -> x.getString("stock_name"))
                     .collect(Collectors.toList());
             List<String> sellList = allList.stream()
                     .filter(x -> x.getInteger("recommend_operation").equals(1))
-                    .map(x -> x.getString("stock_code"))
+                    .map(x -> x.getString("stock_name"))
                     .collect(Collectors.toList());
             List<String> holdingList = allList.stream()
                     .filter(x -> x.getInteger("recommend_operation").equals(2))
-                    .map(x -> x.getString("stock_code"))
+                    .map(x -> x.getString("stock_name"))
                     .collect(Collectors.toList());
             JSONObject tmp = new JSONObject();
             tmp.put("strategyId", strategyId);
