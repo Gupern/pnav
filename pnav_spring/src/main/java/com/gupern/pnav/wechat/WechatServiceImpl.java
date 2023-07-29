@@ -364,6 +364,9 @@ public class WechatServiceImpl implements WechatService {
     }
     // 请求tushare接口
     private JSONArray getStockPriceList(String recommendDate, List<String> buyStockCodeList) {
+        if (buyStockCodeList.size() == 0) {
+            return new JSONArray();
+        }
         JSONObject requestJson = new JSONObject();
         requestJson.put("token", tsToken);
         requestJson.put("api_name", "daily");
